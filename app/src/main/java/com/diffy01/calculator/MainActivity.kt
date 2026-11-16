@@ -105,17 +105,7 @@ private fun CalculatorApp(store: CalculationHistory, vault: SecureVault, prefs: 
                     calculationSteps, { calculationSteps=it }, degree, scientific, { scientific=it },
                     history, { history=it; store.save(it) }, memory, { memory=it },
                     clipboard, context, Color(0xFF101418), Color(0xFFAFCBF4), Color(0xFF9AA8C4),
-                    onOpenTools={ tab="TOOLS" },
-                    onSecretCode={ code ->
-                        if (vault.isConfigured() && code.matches(Regex("[0-9]{4}|[0-9]{6}")) && vault.verifyPin(code.toCharArray())) {
-                            expression = ""
-                            answer = "0"
-                            error = ""
-                            calculationSteps = emptyList()
-                            tab = "GALLERY"
-                            true
-                        } else false
-                    }
+                    onOpenTools={ tab="TOOLS" }
                 )
             } else {
                 Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal=14.dp)) {
@@ -128,7 +118,7 @@ private fun CalculatorApp(store: CalculationHistory, vault: SecureVault, prefs: 
                         Text(if(degree) "DEG" else "RAD",color=fg,modifier=Modifier.background(surface,RoundedCornerShape(12.dp)).clickable { degree=!degree; prefs.edit().putBoolean("degrees",degree).apply() }.padding(12.dp))
                     }
                     Row(Modifier.fillMaxWidth().padding(bottom=10.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-                        listOf("TOOLS","GRAPH","SETTINGS").forEach { item ->
+                        listOf("TOOLS","GRAPH","VAULT","SETTINGS").forEach { item ->
                             val selected=tab==item
                             Surface(Modifier.weight(1f).clickable { tab=item },color=if(selected) Accent else surface,shape=RoundedCornerShape(12.dp)) {
                                 Text(item,color=if(selected) Color.White else muted,fontSize=9.sp,fontWeight=FontWeight.Bold,textAlign=TextAlign.Center,modifier=Modifier.padding(vertical=12.dp))
@@ -138,7 +128,7 @@ private fun CalculatorApp(store: CalculationHistory, vault: SecureVault, prefs: 
                     when(tab) {
                         "TOOLS" -> ToolsScreen(surface,fg,muted)
                         "GRAPH" -> GraphScreen(surface,fg,muted,degree)
-                        "GALLERY" -> VaultScreen(vault,surface,fg,muted,initiallyUnlocked=true)
+                        "VAULT" -> VaultScreen(vault,surface,fg,muted,initiallyUnlocked=false)
                         "SETTINGS" -> SettingsScreen(surface,fg,muted,dark,{dark=it;prefs.edit().putBoolean("dark",it).apply()},degree,{degree=it;prefs.edit().putBoolean("degrees",it).apply()},{history=emptyList();store.clear()},vault)
                     }
                 }
@@ -153,7 +143,7 @@ private fun CalculatorScreen(
     error:String, setError:(String)->Unit, steps:List<String>, setSteps:(List<String>)->Unit, degree:Boolean, scientific:Boolean, setScientific:(Boolean)->Unit,
     history:List<HistoryItem>, setHistory:(List<HistoryItem>)->Unit, memory:Double, setMemory:(Double)->Unit,
     clipboard:androidx.compose.ui.platform.ClipboardManager, context:Context, surface:Color, fg:Color, muted:Color,
-    onOpenTools:()->Unit, onSecretCode:(String)->Boolean
+    onOpenTools:()->Unit
 ) {
     Column(Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal=18.dp), verticalArrangement=Arrangement.spacedBy(5.dp)) {
         Column(Modifier.fillMaxWidth().weight(1f).padding(horizontal=8.dp).padding(top=82.dp),verticalArrangement=Arrangement.Top,horizontalAlignment=Alignment.End) {
@@ -204,9 +194,11 @@ private fun CalculatorScreen(
                     "%" -> setExpression(expression+"%")
                     "+/−" -> setExpression(if(expression.startsWith("-")) expression.drop(1) else "-("+expression+")")
                     "=" -> {
-                        if (!onSecretCode(expression)) runCatching { CalculatorEngine.evaluateWithSteps(expression,degree) }.onSuccess { calculation ->
-                        val formatted=AdvancedMath.format(calculation.value);setAnswer(formatted);setError("");setSteps(calculation.steps);setHistory(listOf(HistoryItem(expression,formatted))+history)
-                    }.onFailure { setError(it.message ?: "Check your expression");setSteps(emptyList()) }
+                        runCatching { CalculatorEngine.evaluateWithSteps(expression,degree) }.onSuccess { calculation ->
+                            val formatted=AdvancedMath.format(calculation.value)
+                            setAnswer(formatted);setError("");setSteps(calculation.steps)
+                            setHistory(listOf(HistoryItem(expression,formatted))+history)
+                        }.onFailure { setError(it.message ?: "Check your expression");setSteps(emptyList()) }
                     }
                     else -> setExpression(expression+when(key){"×"->"*";"÷"->"/";"−"->"-";else->key})
                 }
@@ -446,7 +438,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
         }
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Text("PRIVATE GALLERY",color=fg,fontSize=19.sp,fontWeight=FontWeight.Bold)
+        Text("PRIVATE VAULT",color=fg,fontSize=19.sp,fontWeight=FontWeight.Bold)
         Text("Encrypted on this device. Use a PIN you do not use elsewhere. This is a simple private notes vault, not a replacement for a dedicated password manager.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=10.dp))
         if(!unlocked) {
             PinField(if(configured) "Enter your private access code" else "Create a 4- or 6-digit code",pin){pin=it.filter(Char::isDigit).take(12)}
@@ -591,7 +583,7 @@ private fun SettingsScreen(surface:Color,fg:Color,muted:Color,dark:Boolean,onDar
         PrimaryAction("CLEAR CALCULATION HISTORY",onClear)
         Divider(color=muted.copy(alpha=.2f),modifier=Modifier.padding(vertical=14.dp))
         Text("Private access code",color=fg,fontWeight=FontWeight.Bold)
-        Text("Create your own 4- or 6-digit code. Type it into the calculator and press = to open your private gallery. There is no preset code.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=8.dp))
+        Text("Create your own 4- or 6-digit code. Open the PRIVATE VAULT tab and enter your code. There is no preset code.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=8.dp))
         if (!configured) {
             PinField("Create your private code",createCode){createCode=it.filter(Char::isDigit).take(6)}
             PinField("Confirm private code",confirmCode){confirmCode=it.filter(Char::isDigit).take(6)}
