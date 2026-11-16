@@ -3,15 +3,25 @@ package com.diffy01.calculator
 import kotlin.math.*
 
 /** Safe recursive-descent expression evaluator. It never executes user input as code. */
+data class EvaluatedCalculation(val value: Double, val steps: List<String>)
+
 object CalculatorEngine {
     fun evaluate(source: String, degrees: Boolean = true): Double {
-        val parser = Parser(source, degrees)
-        val result = parser.parse()
+        val result = Parser(source, degrees).parse()
         if (!result.isFinite()) throw IllegalArgumentException("Result is outside the supported range")
         return if (abs(result) < 1e-12) 0.0 else result
     }
 
-    private class Parser(private val input: String, private val degrees: Boolean) {
+    fun evaluateWithSteps(source: String, degrees: Boolean = true): EvaluatedCalculation {
+        val steps = mutableListOf<String>()
+        val result = Parser(source, degrees, steps).parse()
+        if (!result.isFinite()) throw IllegalArgumentException("Result is outside the supported range")
+        val normalized = if (abs(result) < 1e-12) 0.0 else result
+        if (steps.isEmpty()) steps.add("Evaluate $source = ${AdvancedMath.format(normalized)}")
+        return EvaluatedCalculation(normalized, steps)
+    }
+
+    private class Parser(private val input: String, private val degrees: Boolean, private val steps: MutableList<String>? = null) {
         private var pos = 0
         private fun skip() { while (pos < input.length && input[pos].isWhitespace()) pos++ }
         private fun eat(c: Char): Boolean {
@@ -32,8 +42,16 @@ object CalculatorEngine {
             var value = term()
             while (true) {
                 value = when {
-                    eat('+') -> value + term()
-                    eat('-') -> value - term()
+                    eat('+') -> {
+                        val left=value; val right=term(); val result=left+right
+                        steps?.add("${AdvancedMath.format(left)} + ${AdvancedMath.format(right)} = ${AdvancedMath.format(result)}")
+                        result
+                    }
+                    eat('-') -> {
+                        val left=value; val right=term(); val result=left-right
+                        steps?.add("${AdvancedMath.format(left)} - ${AdvancedMath.format(right)} = ${AdvancedMath.format(result)}")
+                        result
+                    }
                     else -> return value
                 }
             }
@@ -42,13 +60,23 @@ object CalculatorEngine {
             var value = unary()
             while (true) {
                 value = when {
-                    eat('*') || eat('×') -> value * unary()
-                    eat('/') || eat('÷') -> {
-                        val divisor = unary()
-                        require(divisor != 0.0, "Cannot divide by zero")
-                        value / divisor
+                    eat('*') || eat('×') -> {
+                        val left=value; val right=unary(); val result=left*right
+                        steps?.add("${AdvancedMath.format(left)} × ${AdvancedMath.format(right)} = ${AdvancedMath.format(result)}")
+                        result
                     }
-                    eat('%') -> value / 100.0
+                    eat('/') || eat('÷') -> {
+                        val left=value; val divisor=unary()
+                        require(divisor != 0.0, "Cannot divide by zero")
+                        val result=left/divisor
+                        steps?.add("${AdvancedMath.format(left)} ÷ ${AdvancedMath.format(divisor)} = ${AdvancedMath.format(result)}")
+                        result
+                    }
+                    eat('%') -> {
+                        val result=value/100.0
+                        steps?.add("${AdvancedMath.format(value)}% = ${AdvancedMath.format(result)}")
+                        result
+                    }
                     else -> return value
                 }
             }
@@ -60,16 +88,21 @@ object CalculatorEngine {
         }
         private fun power(): Double {
             var value = postfix()
-            if (eat('^')) value = value.pow(unary())
+            if (eat('^')) {
+                val base=value; val exponent=unary(); value=base.pow(exponent)
+                steps?.add("${AdvancedMath.format(base)} ^ ${AdvancedMath.format(exponent)} = ${AdvancedMath.format(value)}")
+            }
             return value
         }
         private fun postfix(): Double {
             var value = primary()
             while (eat('!')) {
                 require(value >= 0.0 && value <= 170.0 && value % 1.0 == 0.0, "Factorial requires an integer from 0 to 170")
+                val original=value
                 var result = 1.0
                 for (n in 2..value.toInt()) result *= n
                 value = result
+                steps?.add("${AdvancedMath.format(original)}! = ${AdvancedMath.format(result)}")
             }
             return value
         }
@@ -90,7 +123,7 @@ object CalculatorEngine {
                 val x = expression()
                 require(eat(')'), "Missing function bracket")
                 val angle = if (degrees) Math.toRadians(x) else x
-                return when (name) {
+                val functionResult = when (name) {
                     "sin" -> sin(angle)
                     "cos" -> cos(angle)
                     "tan" -> {
@@ -113,6 +146,8 @@ object CalculatorEngine {
                     "ceil" -> ceil(x)
                     else -> throw IllegalArgumentException("Unknown function: " + name)
                 }
+                steps?.add("$name(${AdvancedMath.format(x)}) = ${AdvancedMath.format(functionResult)}")
+                return functionResult
             }
             throw IllegalArgumentException("Invalid character")
         }
