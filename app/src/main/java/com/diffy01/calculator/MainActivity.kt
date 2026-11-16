@@ -238,6 +238,7 @@ private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
                 PrimaryAction("INVERSE OF A") { output=runCatching { formatMatrix(AdvancedMath.inverse(parseMatrixInput(matrixA))) }.getOrElse { it.message ?: "Matrix has no inverse" } }
                 PrimaryAction("TRANSPOSE A") { output=runCatching { formatMatrix(AdvancedMath.transpose(parseMatrixInput(matrixA))) }.getOrElse { it.message ?: "Check matrix A" } }
                 PrimaryAction("RANK AND TRACE OF A") { output=runCatching { val m=parseMatrixInput(matrixA); "Rank = ${AdvancedMath.rank(m)}\nTrace = ${AdvancedMath.format(AdvancedMath.trace(m))}" }.getOrElse { it.message ?: "Trace requires a square matrix" } }
+                PrimaryAction("SYMMETRIC EIGENVALUES OF A") { output=runCatching { AdvancedMath.symmetricEigenvalues(parseMatrixInput(matrixA)).mapIndexed { index, value -> "λ${index + 1} = ${AdvancedMath.format(value)}" }.joinToString("\\n") }.getOrElse { it.message ?: "Enter a symmetric square matrix" } }
             }
             "COMPLEX" -> {
                 Text("Complex numbers z = a + bi",color=muted,fontSize=13.sp)
