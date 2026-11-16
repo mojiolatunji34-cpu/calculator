@@ -393,7 +393,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
             PinField("Current PIN",currentPin){currentPin=it.filter(Char::isDigit).take(12)}
             PinField("New PIN (6-12 digits)",newPin){newPin=it.filter(Char::isDigit).take(12)}
             PrimaryAction("CHANGE VAULT PIN") {
-                runCatching { vault.changePin(currentPin.toCharArray(),newPin.toCharArray()); currentPin="";newPin="";message="Vault PIN changed. Existing notes were preserved." }
+                runCatching { recoveryCodeToSave=vault.changePin(currentPin.toCharArray(),newPin.toCharArray()); currentPin="";newPin="";message="Vault PIN changed. Save your new recovery code below. Existing notes were preserved." }
                     .onFailure { currentPin="";newPin="";message=it.message ?: "Could not change PIN" }
             }
             entries.forEachIndexed { index,item ->
