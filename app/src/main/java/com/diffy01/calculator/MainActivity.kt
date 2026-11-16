@@ -144,7 +144,7 @@ private fun CalculatorScreen(
         }
         Row(Modifier.fillMaxWidth().padding(horizontal=6.dp,vertical=4.dp),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
             SmallAction("◷") { if(history.isNotEmpty()) { setExpression(history.first().expression);setAnswer(history.first().result);setError("");setSteps(emptyList()) } }
-            SmallAction("▥") { clipboard.setText(AnnotatedString(history.take(10).joinToString("\n") { "${it.expression} = ${it.result}" })) }
+            SmallAction("▥") { onOpenTools() }
             SmallAction("√π") { setScientific(!scientific) }
             SmallAction("⌫") { if(expression.isNotEmpty()) { setExpression(expression.dropLast(1));setError("") } }
         }
