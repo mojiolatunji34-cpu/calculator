@@ -46,6 +46,11 @@ class AdvancedMathTest {
         assertEquals(100.0, AdvancedMath.convert(1.0,"bar","kPa"),1e-10)
         assertEquals(273.15, AdvancedMath.convert(32.0,"°F","K"),1e-10)
     }
+    @Test fun configurableNumberFormatting() {
+        assertEquals("1.23", AdvancedMath.format(1.23456,2))
+        assertEquals("1", AdvancedMath.format(1.9,0))
+        assertThrows(IllegalArgumentException::class.java) { AdvancedMath.format(1.0,16) }
+    }
     @Test fun unitConversion() {
         assertEquals(1000.0, AdvancedMath.convert(1.0,"km","m"),1e-10)
         assertEquals(32.0, AdvancedMath.convert(0.0,"°C","°F"),1e-10)
