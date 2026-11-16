@@ -375,6 +375,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
             delay(5 * 60 * 1000L)
             unlocked = false
             entries = emptyList()
+            mediaItems = emptyList()
             title = ""; secret = ""; currentPin = ""; newPin = ""; recoveryInput = ""; recoveryNewPin = ""; recoveryCodeToSave = ""
             message = "Vault locked automatically after five minutes."
         }
