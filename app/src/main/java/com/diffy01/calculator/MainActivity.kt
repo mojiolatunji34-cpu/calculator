@@ -183,6 +183,32 @@ private fun CalculatorScreen(
     }
 }
 
+
+@Composable
+private fun Key(label:String,modifier:Modifier,surface:Color,fg:Color,action:Boolean,compact:Boolean=false,onClick:()->Unit) {
+    val bg=if(label=="=") Color(0xFF9B405B) else surface
+    Surface(
+        modifier=modifier.padding(vertical=if(compact) 2.dp else 3.dp)
+            .height(if(compact) 46.dp else 70.dp)
+            .semantics { contentDescription="$label key"; role=Role.Button }
+            .clickable { onClick() },
+        color=bg,
+        shape=if(compact) RoundedCornerShape(30.dp) else RoundedCornerShape(50),
+        tonalElevation=0.dp
+    ) {
+        Box(contentAlignment=Alignment.Center) {
+            Text(label,color=if(label=="=") Color.White else if(action) Color(0xFFD99AAE) else Color(0xFFAFCBF4),
+                fontSize=if(compact) 17.sp else 27.sp,fontWeight=FontWeight.Medium)
+        }
+    }
+}
+
+@Composable
+private fun SmallAction(label:String,onClick:()->Unit) {
+    Text(label,color=Color(0xFFAFCBF4),fontSize=if(label.length>3) 10.sp else 22.sp,
+        fontWeight=FontWeight.Medium,modifier=Modifier.clickable { onClick() }.padding(horizontal=10.dp,vertical=8.dp))
+}
+
 @Composable
 private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
     var tool by remember { mutableStateOf("EQUATIONS") }
