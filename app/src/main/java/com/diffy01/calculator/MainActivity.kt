@@ -95,7 +95,17 @@ private fun CalculatorApp(store: CalculationHistory, vault: SecureVault, prefs: 
                     calculationSteps, { calculationSteps=it }, degree, scientific, { scientific=it },
                     history, { history=it; store.save(it) }, memory, { memory=it },
                     clipboard, context, Color(0xFF101418), Color(0xFFAFCBF4), Color(0xFF9AA8C4),
-                    onOpenTools={ tab="TOOLS" }
+                    onOpenTools={ tab="TOOLS" },
+                    onSecretCode={ code ->
+                        if (vault.isConfigured() && code.matches(Regex("[0-9]{6,12}")) && vault.verifyPin(code.toCharArray())) {
+                            expression = ""
+                            answer = "0"
+                            error = ""
+                            calculationSteps = emptyList()
+                            tab = "GALLERY"
+                            true
+                        } else false
+                    }
                 )
             } else {
                 Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal=14.dp)) {
@@ -108,7 +118,7 @@ private fun CalculatorApp(store: CalculationHistory, vault: SecureVault, prefs: 
                         Text(if(degree) "DEG" else "RAD",color=fg,modifier=Modifier.background(surface,RoundedCornerShape(12.dp)).clickable { degree=!degree; prefs.edit().putBoolean("degrees",degree).apply() }.padding(12.dp))
                     }
                     Row(Modifier.fillMaxWidth().padding(bottom=10.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-                        listOf("TOOLS","GRAPH","VAULT","SETTINGS").forEach { item ->
+                        listOf("TOOLS","GRAPH","SETTINGS").forEach { item ->
                             val selected=tab==item
                             Surface(Modifier.weight(1f).clickable { tab=item },color=if(selected) Accent else surface,shape=RoundedCornerShape(12.dp)) {
                                 Text(item,color=if(selected) Color.White else muted,fontSize=9.sp,fontWeight=FontWeight.Bold,textAlign=TextAlign.Center,modifier=Modifier.padding(vertical=12.dp))
@@ -118,8 +128,8 @@ private fun CalculatorApp(store: CalculationHistory, vault: SecureVault, prefs: 
                     when(tab) {
                         "TOOLS" -> ToolsScreen(surface,fg,muted)
                         "GRAPH" -> GraphScreen(surface,fg,muted,degree)
-                        "VAULT" -> VaultScreen(vault,surface,fg,muted)
-                        "SETTINGS" -> SettingsScreen(surface,fg,muted,dark,{dark=it;prefs.edit().putBoolean("dark",it).apply()},degree,{degree=it;prefs.edit().putBoolean("degrees",it).apply()},{history=emptyList();store.clear()})
+                        "GALLERY" -> VaultScreen(vault,surface,fg,muted,initiallyUnlocked=true)
+                        "SETTINGS" -> SettingsScreen(surface,fg,muted,dark,{dark=it;prefs.edit().putBoolean("dark",it).apply()},degree,{degree=it;prefs.edit().putBoolean("degrees",it).apply()},{history=emptyList();store.clear()},vault)
                     }
                 }
             }
@@ -132,7 +142,8 @@ private fun CalculatorScreen(
     expression:String, setExpression:(String)->Unit, answer:String, setAnswer:(String)->Unit,
     error:String, setError:(String)->Unit, steps:List<String>, setSteps:(List<String>)->Unit, degree:Boolean, scientific:Boolean, setScientific:(Boolean)->Unit,
     history:List<HistoryItem>, setHistory:(List<HistoryItem>)->Unit, memory:Double, setMemory:(Double)->Unit,
-    clipboard:androidx.compose.ui.platform.ClipboardManager, context:Context, surface:Color, fg:Color, muted:Color, onOpenTools:()->Unit
+    clipboard:androidx.compose.ui.platform.ClipboardManager, context:Context, surface:Color, fg:Color, muted:Color,
+    onOpenTools:()->Unit, onSecretCode:(String)->Boolean
 ) {
     Column(Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal=18.dp), verticalArrangement=Arrangement.spacedBy(5.dp)) {
         Column(Modifier.fillMaxWidth().weight(1f).padding(horizontal=8.dp).padding(top=82.dp),verticalArrangement=Arrangement.Top,horizontalAlignment=Alignment.End) {
@@ -182,9 +193,11 @@ private fun CalculatorScreen(
                     "()" -> setExpression(expression+if(expression.count{it=='('}>expression.count{it==')'}) ")" else "(")
                     "%" -> setExpression(expression+"%")
                     "+/−" -> setExpression(if(expression.startsWith("-")) expression.drop(1) else "-("+expression+")")
-                    "=" -> runCatching { CalculatorEngine.evaluateWithSteps(expression,degree) }.onSuccess { calculation ->
+                    "=" -> {
+                        if (!onSecretCode(expression)) runCatching { CalculatorEngine.evaluateWithSteps(expression,degree) }.onSuccess { calculation ->
                         val formatted=AdvancedMath.format(calculation.value);setAnswer(formatted);setError("");setSteps(calculation.steps);setHistory(listOf(HistoryItem(expression,formatted))+history)
                     }.onFailure { setError(it.message ?: "Check your expression");setSteps(emptyList()) }
+                    }
                     else -> setExpression(expression+when(key){"×"->"*";"÷"->"/";"−"->"-";else->key})
                 }
                 if(key!="=" && key!="C") setError("")
@@ -351,12 +364,12 @@ private fun GraphScreen(surface:Color,fg:Color,muted:Color,degree:Boolean) {
 }
 
 @Composable
-private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
+private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,initiallyUnlocked:Boolean=false) {
     val context = LocalContext.current
     val mediaVault = remember { SecureMediaVault(context) }
     var mediaItems by remember { mutableStateOf(mediaVault.listItems()) }
     var message by remember { mutableStateOf("") }
-    var pin by remember { mutableStateOf("") }; var unlocked by remember { mutableStateOf(false) }
+    var pin by remember { mutableStateOf("") }; var unlocked by remember { mutableStateOf(initiallyUnlocked) }
     val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
             runCatching {
@@ -465,12 +478,45 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
 }
 
 @Composable
-private fun SettingsScreen(surface:Color,fg:Color,muted:Color,dark:Boolean,onDark:(Boolean)->Unit,degree:Boolean,onDegree:(Boolean)->Unit,onClear:()->Unit) {
+private fun SettingsScreen(surface:Color,fg:Color,muted:Color,dark:Boolean,onDark:(Boolean)->Unit,degree:Boolean,onDegree:(Boolean)->Unit,onClear:()->Unit,vault:SecureVault) {
+    var configured by remember { mutableStateOf(vault.isConfigured()) }
+    var createCode by remember { mutableStateOf("") }
+    var confirmCode by remember { mutableStateOf("") }
+    var currentCode by remember { mutableStateOf("") }
+    var newCode by remember { mutableStateOf("") }
+    var confirmNewCode by remember { mutableStateOf("") }
+    var recoveryCode by remember { mutableStateOf("") }
+    var privateMessage by remember { mutableStateOf("") }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Text("PREFERENCES",color=fg,fontSize=19.sp,fontWeight=FontWeight.Bold)
         SettingRow("Dark appearance","Use the dark calculator theme",dark,onDark,fg,muted)
         SettingRow("Degree mode","Use degrees for trigonometry",degree,onDegree,fg,muted)
         PrimaryAction("CLEAR CALCULATION HISTORY",onClear)
+        Divider(color=muted.copy(alpha=.2f),modifier=Modifier.padding(vertical=14.dp))
+        Text("Private access code",color=fg,fontWeight=FontWeight.Bold)
+        Text("Create your own 6–12 digit code. Enter it on the calculator and press = to open your private gallery. There is no preset code.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=8.dp))
+        if (!configured) {
+            PinField("Create your private code",createCode){createCode=it.filter(Char::isDigit).take(12)}
+            PinField("Confirm private code",confirmCode){confirmCode=it.filter(Char::isDigit).take(12)}
+            PrimaryAction("SAVE PRIVATE CODE") {
+                if (createCode.length !in 6..12) privateMessage="Use 6–12 digits."
+                else if (createCode != confirmCode) privateMessage="The codes do not match."
+                else runCatching { recoveryCode=vault.setPin(createCode.toCharArray()); configured=true; createCode=""; confirmCode=""; privateMessage="Private code saved. Keep the recovery code below somewhere safe." }
+                    .onFailure { privateMessage=it.message ?: "Could not save the code." }
+            }
+        } else {
+            PinField("Current private code",currentCode){currentCode=it.filter(Char::isDigit).take(12)}
+            PinField("New private code",newCode){newCode=it.filter(Char::isDigit).take(12)}
+            PinField("Confirm new code",confirmNewCode){confirmNewCode=it.filter(Char::isDigit).take(12)}
+            PrimaryAction("CHANGE PRIVATE CODE") {
+                if (newCode.length !in 6..12) privateMessage="Use 6–12 digits."
+                else if (newCode != confirmNewCode) privateMessage="The new codes do not match."
+                else runCatching { recoveryCode=vault.changePin(currentCode.toCharArray(),newCode.toCharArray()); currentCode="";newCode="";confirmNewCode="";privateMessage="Private code changed. Save the new recovery code below." }
+                    .onFailure { currentCode="";newCode="";confirmNewCode="";privateMessage=it.message ?: "Could not change the code." }
+            }
+        }
+        if (privateMessage.isNotBlank()) Text(privateMessage,color=Accent,fontSize=12.sp,modifier=Modifier.padding(vertical=6.dp))
+        if (recoveryCode.isNotBlank()) SelectionContainer { Text("RECOVERY CODE — SAVE THIS: $recoveryCode",color=fg,fontWeight=FontWeight.Bold,fontSize=13.sp,modifier=Modifier.fillMaxWidth().background(surface,RoundedCornerShape(12.dp)).padding(12.dp)) }
         Text("Privacy",color=fg,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=18.dp))
         Text("Calculations and vault items are stored locally. The app does not need internet access for calculations. Keep your device protected and do not store highly sensitive credentials in a basic notes vault.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=8.dp))
         Text("DIFFY 01 • Scientific Suite • Version 1.3.0",color=muted,fontSize=11.sp,modifier=Modifier.padding(top=18.dp))
