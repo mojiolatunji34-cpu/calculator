@@ -50,13 +50,18 @@ class SecureVault(context: Context) {
         }
     }
 
-    fun changePin(currentPin: CharArray, newPin: CharArray) {
-        require(verifyPin(currentPin)) { "Current PIN is incorrect" }
-        require(newPin.size in 6..12 && newPin.all { it.isDigit() }) { "New PIN must contain 6–12 digits" }
-        val salt = ByteArray(16).also(random::nextBytes)
-        val hash = pinHash(newPin, salt)
-        prefs.edit().putString("pin_salt", b64(salt)).putString("pin_hash", b64(hash)).apply()
-        newPin.fill('\u0000')
+    fun changePin(currentPin: CharArray, newPin: CharArray): String {
+        try {
+            require(verifyPin(currentPin)) { "Current PIN is incorrect" }
+            require(newPin.size in 6..12 && newPin.all { it.isDigit() }) { "New PIN must contain 6–12 digits" }
+            savePinHash(newPin)
+            val replacementCode = generateRecoveryCode()
+            saveRecoveryHash(replacementCode)
+            return replacementCode
+        } finally {
+            currentPin.fill(0.toChar())
+            newPin.fill(0.toChar())
+        }
     }
 
     fun readEntries(): List<VaultEntry> {
