@@ -1,258 +1,232 @@
 # CALCULATOR — DIFFY 01
 
-### A modern, scientific Android calculator
+### A Powerful, Modern Scientific Calculator for Android
 
-**Calculator — Diffy 01** is an Android calculator project focused on mathematical accuracy, a polished mobile experience, useful scientific functions, and a maintainable codebase.
+A feature-rich scientific calculator project designed to bring reliable everyday arithmetic and advanced mathematical tools into one clean, responsive Android application.
 
-The goal is to bring everyday arithmetic and scientific calculations together in one clear, reliable, offline-first application.
-
-> **Project status:** Active development. The source code is in the repository. A successful APK build and real-device QA must be confirmed before describing a release as production-ready.
-
----
-
-## Contents
-
-- [Project vision](#project-vision)
-- [Current capabilities](#current-capabilities)
-- [Scientific functions](#scientific-functions)
-- [Interface and experience](#interface-and-experience)
-- [Calculation engine and accuracy](#calculation-engine-and-accuracy)
-- [History and local data](#history-and-local-data)
-- [Privacy and security](#privacy-and-security)
-- [Technology stack](#technology-stack)
-- [Project structure](#project-structure)
-- [Getting started](#getting-started)
-- [Build the Android APK](#build-the-android-apk)
-- [Automated testing](#automated-testing)
-- [Android compatibility](#android-compatibility)
-- [Accessibility](#accessibility)
-- [Development standards](#development-standards)
-- [Roadmap](#roadmap)
-- [Contributing](#contributing)
-- [Release checklist](#release-checklist)
-- [Developer and license](#developer-and-license)
+**Project:** Calculator  
+**Developer / Project identity:** Diffy 01  
+**Platform:** Android  
+**Category:** Productivity · Education · Mathematics  
+**Status:** Active development  
+**License:** MIT
 
 ---
 
-## Project vision
+## 1. Project vision
 
-Calculator is intended for students, teachers, professionals, and anyone who needs a practical calculator with scientific capabilities.
+Calculator aims to combine the simplicity of a standard calculator with the capabilities of a scientific calculator.
 
-Our development priorities are:
+The project is being developed around six priorities:
 
-1. **Accuracy:** mathematical operations should produce correct and predictable results.
-2. **Reliability:** invalid input should be handled safely without crashing the app.
-3. **Usability:** controls should be clear, readable, and comfortable to use.
-4. **Performance:** calculations and interactions should feel responsive.
-5. **Maintainability:** the project should remain organized as features grow.
-6. **Privacy:** core calculations should work locally without requiring an account.
+1. **Mathematical accuracy** — expressions must follow established mathematical rules.
+2. **Speed and responsiveness** — calculations and controls should feel immediate.
+3. **Excellent usability** — the interface should be clear on small and large phone screens.
+4. **Reliability** — invalid input should be handled safely without crashing the app.
+5. **Privacy** — core calculations should work offline and calculation history should remain on the device.
+6. **Maintainability** — the codebase should be modular, documented, and testable.
 
-The application should be useful as a daily calculator while providing a foundation for more advanced mathematical tools.
+This README is the product specification and development guide. A feature described as planned is not considered complete until it has been implemented and tested.
 
 ---
 
-## Current capabilities
+## 2. Product goals
 
-The following features are represented in the current source implementation. They still require build and device testing before a release can be considered verified.
+The finished application should:
 
-### Standard calculator
+- Provide a dependable standard calculator for daily use.
+- Offer scientific functions for school, university, technical, and professional calculations.
+- Evaluate complete mathematical expressions with correct operator precedence.
+- Support degrees and radians for angle-based functions.
+- Keep a useful, locally stored calculation history.
+- Offer comfortable light and dark appearances.
+- Adapt to different Android screen sizes and orientations.
+- Work without an internet connection for its core functions.
+- Be tested before any release is described as stable.
 
-- Addition, subtraction, multiplication, and division
-- Decimal number input
-- Percentage operation
+---
+
+## 3. Feature specification
+
+### 3.1 Standard calculator
+
+Core arithmetic and input features:
+
+- Addition
+- Subtraction
+- Multiplication
+- Division
+- Decimal numbers
+- Percentage calculations
 - Positive and negative values
-- Parentheses
+- Parentheses and grouped expressions
 - Clear-all and backspace controls
-- Expression display and calculated result
-- Operator precedence
+- Repeated and chained calculations
+- Sensible result formatting
+- Scientific notation for very large or very small values
 
-### Scientific calculator
+### 3.2 Scientific calculator
 
-- Sine, cosine, and tangent
-- Inverse sine, cosine, and tangent
-- Hyperbolic sine, cosine, and tangent
-- Common logarithm (base 10)
-- Natural logarithm
-- Square root and cube root
-- Powers and exponents
+Scientific functions planned for the complete application:
+
+- Sine: `sin`
+- Cosine: `cos`
+- Tangent: `tan`
+- Inverse trigonometric functions: `asin`, `acos`, `atan`
+- Hyperbolic functions: `sinh`, `cosh`, `tanh`
+- Common logarithm: `log`
+- Natural logarithm: `ln`
+- Exponential function: `exp`
+- Square root
+- Cube root
+- General powers and roots
 - Factorials
 - Absolute value
-- Exponential function
-- Floor and ceiling functions
-- Pi (π) and Euler's number (e)
+- Floor and ceiling
+- Mathematical constants pi (`π`) and Euler's number (`e`)
 
-### Angle settings
+### 3.3 Advanced mathematics — planned
+
+The following are future development targets and are not represented as completed functionality:
+
+- Fraction calculations and fraction/decimal conversion
+- Scientific notation controls
+- Modulo and remainder operations
+- Permutations and combinations
+- Greatest common divisor (GCD)
+- Least common multiple (LCM)
+- Complex-number calculations
+- Matrix calculations
+- Statistics functions
+- Equation-solving tools
+- Graph plotting
+- Unit conversion utilities
+
+Each advanced module will be added only after its mathematical behavior and user interface can be tested properly.
+
+### 3.4 Angle modes
 
 - Degree mode (DEG)
 - Radian mode (RAD)
-- Switch angle mode from the calculator interface
+- A clear on-screen indicator of the active mode
+- Correct conversion and evaluation for trigonometric functions
 
-### Convenience features
+### 3.5 Calculation history
 
-- Standard and scientific keypad layouts
-- Dark and light appearance toggle
-- Calculation history stored locally
-- Reuse an earlier expression from history
-- Clear saved calculation history
-- Responsive Compose-based screen layout
-- Offline operation for core calculations
+History requirements:
 
----
+- Save successful calculations locally.
+- Show both the original expression and its result.
+- Allow a previous calculation to be reused.
+- Allow users to clear stored history.
+- Preserve history across normal application restarts.
+- Handle empty or damaged history data safely.
 
-## Scientific functions
-
-The expression engine currently recognizes these function names:
-
-| Function | Meaning |
-|---|---|
-| `sin(x)` | Sine |
-| `cos(x)` | Cosine |
-| `tan(x)` | Tangent |
-| `asin(x)` | Inverse sine |
-| `acos(x)` | Inverse cosine |
-| `atan(x)` | Inverse tangent |
-| `sinh(x)` | Hyperbolic sine |
-| `cosh(x)` | Hyperbolic cosine |
-| `tanh(x)` | Hyperbolic tangent |
-| `log(x)` | Base-10 logarithm |
-| `ln(x)` | Natural logarithm |
-| `sqrt(x)` | Square root |
-| `cbrt(x)` | Cube root |
-| `abs(x)` | Absolute value |
-| `exp(x)` | Exponential function |
-| `floor(x)` | Round down to an integer |
-| `ceil(x)` | Round up to an integer |
-
-Constants: `pi`, `π`, and `e`.
-
-Examples of supported expression syntax:
-
-```text
-2 + 3 * 4
-(2 + 3) * 4
-sqrt(81)
-sin(30)
-log(100)
-5!
-2^8
-50%
-```
-
-Trigonometric calculations use the selected DEG or RAD setting. Inverse trigonometric results are expressed in the selected angle unit.
-
----
-
-## Interface and experience
-
-The interface is built with Jetpack Compose and Material 3.
+### 3.6 Appearance and usability
 
 Design goals:
 
-- Clean, modern calculator screen
-- Clear expression and result display
-- Large, comfortable touch controls
-- Consistent spacing and typography
-- Distinct styling for number and operation keys
-- Dark and light appearances
-- Scientific and standard layouts
-- Support for different Android screen dimensions
-- Appropriate behavior around system status and navigation bars
+- Modern, uncluttered calculator layout.
+- Clear expression and result display.
+- Large, comfortable touch controls.
+- Consistent spacing, typography, and button styling.
+- Light and dark themes.
+- Clear visual distinction between number, operator, and action keys.
+- Smooth but restrained interaction feedback.
+- Responsive layouts for different Android screen sizes.
+- Support for portrait and landscape use.
 
-The interface will continue to be refined through actual testing on phones and emulators.
+### 3.7 Accessibility
 
----
+Accessibility goals:
 
-## Calculation engine and accuracy
-
-Mathematical correctness is a core requirement.
-
-The current calculation engine uses a dedicated recursive-descent parser. It does not pass user-entered expressions to a programming-language evaluator.
-
-The parser is designed to handle:
-
-- Arithmetic precedence
-- Parenthesized expressions
-- Unary positive and negative values
-- Exponents
-- Scientific function calls
-- Constants
-- Postfix factorial and percentage operations
-- Invalid expression detection
-
-### Error handling goals
-
-The app should display understandable errors for cases such as:
-
-- Division by zero
-- Missing or unmatched parentheses
-- Unknown function names
-- Invalid numbers
-- Invalid square-root input
-- Undefined tangent values
-- Invalid factorial input
-- Results outside the supported numeric range
-
-Floating-point calculations have finite precision. Results should be formatted clearly, and numerical edge cases should be covered by tests.
+- Readable text and sufficient contrast.
+- Descriptive labels for interactive controls.
+- Comfortable touch targets.
+- Clear focus and interaction states.
+- Consistent navigation.
+- Important information must not be communicated by color alone.
+- Support for Android accessibility services where practical.
 
 ---
 
-## History and local data
+## 4. Calculation engine and mathematical correctness
 
-Calculation history is stored on the device using Android local preferences.
+The calculation engine is a core part of the application and must be treated as a separate, testable module.
 
-Current history behavior:
+It should provide:
 
-- Save completed expressions and results
-- Display recent calculations
-- Select an earlier calculation to reuse its expression
-- Clear saved history
-- Limit stored history to a reasonable number of recent entries
+- Correct operator precedence.
+- Correct handling of nested parentheses.
+- Unary plus and minus.
+- Decimal and scientific-notation parsing.
+- Correct function argument handling.
+- Correct degree/radian behavior.
+- Defined rules for percentages and factorials.
+- Consistent numerical formatting.
+- Clear errors for invalid or undefined expressions.
 
-The app does not need a user account or cloud service for its core calculator functionality.
+### Error handling
 
----
+The app should safely handle cases such as:
 
-## Privacy and security
+- Division by zero.
+- Missing or unmatched parentheses.
+- Incomplete expressions.
+- Invalid characters.
+- Unknown functions.
+- Invalid function arguments.
+- Negative square-root inputs in the real-number calculator.
+- Logarithms of zero or negative values.
+- Factorials outside the supported integer range.
+- Overflow, underflow, and non-finite results.
 
-Privacy is a design priority.
+The application must never crash because a user enters an invalid expression.
 
-- Core calculations run locally on the device.
-- The application does not require an account.
-- The current manifest does not request internet access.
-- Calculation history is stored locally.
-- Mathematical input is parsed as an expression, not executed as arbitrary application code.
-- No analytics or advertising SDK is included in the current dependency list.
+### Safe expression processing
 
-Any future feature that introduces networking, analytics, backups, or cloud synchronization must explain what data is used and obtain appropriate user consent.
+User-entered mathematical expressions must be parsed by a dedicated mathematical parser. They must never be passed to a general-purpose code evaluator, shell, or executable-code engine.
 
----
-
-## Technology stack
-
-| Technology | Purpose |
-|---|---|
-| Kotlin | Main application language |
-| Native Android | Mobile platform |
-| Jetpack Compose | Declarative user interface |
-| Material 3 | UI components and theming |
-| Gradle Kotlin DSL | Project and build configuration |
-| JUnit 4 | Unit testing |
-| Android SharedPreferences | Local calculation history |
-
-### Development environment
-
-- Android Studio
-- JDK 17
-- Android SDK 35
-- Android Gradle Plugin 8.7.3
-- Kotlin 2.0.21
-- Gradle 8.9
-
-Use a compatible Android Studio installation and allow Gradle to download the required dependencies.
+Numerical precision and rounding behavior must be documented and tested. Floating-point results should not be presented with misleading precision.
 
 ---
 
-## Project structure
+## 5. User interface and Android experience
+
+The interface is being built with native Android technologies and Jetpack Compose.
+
+Design and interaction standards:
+
+- Keep the expression display readable when expressions become long.
+- Make important controls easy to reach.
+- Prevent buttons from becoming too small on compact devices.
+- Ensure the result display does not overlap the keypad.
+- Support vertical scrolling or an adaptive layout where screen height is limited.
+- Preserve useful application state across normal configuration changes where appropriate.
+- Keep animations lightweight and avoid unnecessary visual effects.
+
+The final app should feel like a polished Android application, not simply a web page packaged inside an APK.
+
+---
+
+## 6. Technology stack
+
+Current project technology:
+
+- **Kotlin** — primary application language.
+- **Native Android** — application platform.
+- **Jetpack Compose** — declarative user interface.
+- **Material 3** — interface components and theming.
+- **Gradle Kotlin DSL** — build configuration.
+- **JUnit** — local unit testing.
+
+The project uses a modular separation between the user interface, mathematical engine, and local history storage. New features should follow the same separation.
+
+---
+
+## 7. Project structure
+
+Current and intended source organization:
 
 ```text
 calculator/
@@ -283,264 +257,242 @@ calculator/
 └── README.md
 ```
 
-The structure may evolve as the app is separated into additional modules.
+As the application grows, additional packages should be introduced for scientific functions, settings, accessibility, and advanced calculation modes rather than placing all logic in one large source file.
 
 ---
 
-## Getting started
+## 8. Android compatibility and build requirements
 
-1. Install Android Studio and JDK 17.
-2. Clone or download this repository.
-3. Open the project root in Android Studio.
-4. Allow Gradle sync to complete.
-5. Install an Android emulator or connect an Android device with developer debugging enabled.
-6. Select the app run configuration.
-7. Build and run the application.
+Development environment:
 
-Clone command:
+- Android Studio.
+- JDK 17.
+- Android Gradle Plugin 8.7.3.
+- Gradle 8.9.
+- Android SDK Platform 35 for the current build configuration.
+- Minimum supported Android API level: 23, subject to compatibility testing.
 
-```bash
-git clone https://github.com/mojiolatunji34-cpu/calculator.git
-cd calculator
-```
+The minimum and target SDK values should be reviewed as Android platform requirements evolve.
 
----
+### Open and run the project
 
-## Build the Android APK
+1. Clone or download this repository.
+2. Open the project folder in Android Studio.
+3. Allow Gradle synchronization to complete.
+4. Install the required Android SDK components if prompted.
+5. Start an Android emulator or connect an Android device with USB debugging enabled.
+6. Select the app run configuration and run the application.
 
-From the project root, run:
+### Build a debug APK
+
+From the project root, with a compatible JDK and Android SDK installed:
 
 ```bash
 gradle assembleDebug
 ```
 
-The debug APK should be generated at:
+The expected output location is:
 
 ```text
 app/build/outputs/apk/debug/app-debug.apk
 ```
 
-To run the local unit tests:
+The APK should be installed and tested before it is distributed.
 
-```bash
-gradle testDebugUnitTest
-```
+### Release build
 
-To run both checks:
+A production release must use a properly configured private signing key. Keep signing keys, passwords, API secrets, and local machine configuration out of Git.
 
-```bash
-gradle testDebugUnitTest assembleDebug
-```
-
-A debug APK is intended for development and testing. A distributable release requires a properly configured signing key and release build configuration. Keep signing keys and passwords private; never commit them to GitHub.
+A release build is not considered ready until it has been built, signed, installed, and tested.
 
 ---
 
-## Automated testing
+## 9. Testing and quality assurance
 
-The repository includes unit tests for core expression-engine behavior.
+Testing is required for every important calculation feature and release.
 
-Testing should cover:
+### Mathematical tests
 
-### Arithmetic
+Test cases should cover:
 
-- Addition, subtraction, multiplication, and division
-- Operator precedence
-- Nested parentheses
-- Decimal values
-- Exponents
+- Addition, subtraction, multiplication, and division.
+- Operator precedence.
+- Nested parentheses.
+- Decimal arithmetic.
+- Negative values and unary operators.
+- Powers and roots.
+- Trigonometric functions in degrees.
+- Trigonometric functions in radians.
+- Logarithms and natural logarithms.
+- Factorials and percentages.
+- Constants.
+- Invalid expressions and invalid function arguments.
+- Very large and very small results.
 
-### Scientific mathematics
+### Android application tests
 
-- Trigonometric functions in degrees
-- Trigonometric functions in radians
-- Logarithms
-- Roots
-- Constants
-- Factorials
-- Percentages
+Test the application for:
 
-### Invalid input
+- Successful installation and startup.
+- Standard and scientific key interactions.
+- Correct display of long expressions and results.
+- History saving, loading, reuse, and clearing.
+- Theme switching.
+- Portrait and landscape layouts.
+- Compact and large screen sizes.
+- App backgrounding and resuming.
+- Invalid input without application crashes.
+- Offline operation of core calculations.
 
-- Division by zero
-- Negative square roots
-- Unmatched parentheses
-- Invalid expressions
-- Unsupported function names
+### Release acceptance criteria
 
-### Android application checks
+A release may be marked stable only when:
 
-- App launch and installation
-- Keypad interaction
-- Scientific/standard switching
-- DEG/RAD switching
-- Theme switching
-- History saving and clearing
-- Portrait and landscape layouts
-- Different screen sizes
-- Reopening the app after closing it
+1. The project builds successfully.
+2. Automated tests pass.
+3. The APK is generated successfully.
+4. The APK installs on a supported Android device or emulator.
+5. Core arithmetic and scientific functions are manually checked.
+6. No known critical crash or data-loss issue remains.
+7. The release notes accurately describe what is included.
 
----
-
-## Android compatibility
-
-The current Android configuration targets:
-
-- Minimum SDK: Android 6.0 (API 23)
-- Compile SDK: Android 15 (API 35)
-- Target SDK: Android 15 (API 35)
-
-Compatibility must be verified on supported Android versions and different device manufacturers. The actual release target SDK should be reviewed against current Google Play requirements before publishing.
+A successful source-code commit or CI configuration alone does not prove that the APK has passed device testing.
 
 ---
 
-## Accessibility
+## 10. Continuous integration
 
-Accessibility improvements are part of the development plan:
+The repository includes a GitHub Actions workflow intended to:
 
-- Readable text sizes
-- Sufficient contrast
-- Clear labels for calculator controls
-- Comfortable touch targets
-- Predictable focus and navigation
-- Screen-reader support
-- Important information not communicated by color alone
+- Check out the source code.
+- Set up JDK 17.
+- Configure Gradle.
+- Run local unit tests.
+- Build the debug APK.
+- Upload the APK as a workflow artifact.
 
-These requirements should be checked during UI testing, not only documented.
-
----
-
-## Development standards
-
-Every change should follow these principles:
-
-1. Keep code modular and readable.
-2. Use clear names for classes, functions, and variables.
-3. Avoid duplicated calculation logic.
-4. Validate user input before evaluating it.
-5. Handle errors without crashing the app.
-6. Add tests for new mathematical functionality.
-7. Keep dependencies deliberate and maintained.
-8. Preserve existing working features when adding new ones.
-9. Review build and test results before merging changes.
-10. Do not mark a feature complete until it has been implemented and tested.
+Workflow results should be reviewed in the repository's **Actions** tab. Failed builds must be investigated and corrected before the build is described as successful.
 
 ---
 
-## Roadmap
+## 11. Privacy and security
 
-The roadmap distinguishes existing source functionality from features that have not yet been implemented.
+The core calculator is designed to work offline.
+
+Privacy principles:
+
+- No account is required for basic calculations.
+- Do not request permissions that are not needed.
+- Keep calculation history on the device by default.
+- Do not transmit calculation expressions or history without a clear feature requirement and user consent.
+- Do not include secrets or signing credentials in source control.
+- Parse expressions safely; never execute user input as code.
+
+Any future feature that uses network access must explain why it needs that access and what information, if any, is transmitted.
+
+---
+
+## 12. Development roadmap
+
+The roadmap tracks the intended development sequence. Checkboxes should be updated only after implementation and verification.
 
 ### Phase 1 — Foundation
 
-- [x] Native Android project configuration
-- [x] Kotlin and Jetpack Compose setup
-- [x] Main calculator screen
-- [x] Standard arithmetic keypad
-- [x] Scientific expression parser
-- [x] DEG/RAD selection
-- [x] Local calculation history
-- [x] Dark/light appearance toggle
-- [x] Initial unit tests
-- [x] GitHub Actions build workflow configuration
-- [ ] Confirm successful CI build
-- [ ] Install and test APK on a real Android device
+- [x] Create the native Android project structure.
+- [x] Configure Kotlin, Compose, and Gradle.
+- [x] Create the initial calculator interface.
+- [x] Add a dedicated expression-engine module.
+- [x] Add local calculation-history storage.
+- [x] Add initial unit tests.
+- [ ] Verify a complete clean build in CI.
+- [ ] Install and test the APK on a physical Android device.
 
-### Phase 2 — Scientific improvements
+### Phase 2 — Scientific calculator
 
-- [ ] Improve expression editing and cursor placement
-- [ ] Add explicit multiplication and division display formatting
-- [ ] Add fraction calculations
-- [ ] Add scientific notation controls
-- [ ] Add memory functions (MC, MR, M+, M−)
-- [ ] Add configurable decimal precision
-- [ ] Expand numerical edge-case tests
+- [x] Initial arithmetic and expression parsing.
+- [x] Initial trigonometric and logarithmic engine functions.
+- [x] Degree/radian setting.
+- [ ] Complete and verify every scientific keypad action.
+- [ ] Add scientific notation input and display controls.
+- [ ] Expand edge-case and precision tests.
 
-### Phase 3 — Advanced mathematics
+### Phase 3 — User experience
 
-- [ ] Statistics functions
-- [ ] Permutations and combinations
-- [ ] Greatest common divisor and least common multiple
-- [ ] Matrix calculations
-- [ ] Complex numbers
-- [ ] Equation-solving tools
-- [ ] Unit conversion tools
+- [x] Initial dark and light appearance.
+- [x] Initial responsive Compose screen.
+- [ ] Finish adaptive layouts for compact and landscape screens.
+- [ ] Improve accessibility labels and touch-target testing.
+- [ ] Add refined interaction feedback and settings persistence.
 
-### Phase 4 — Visual tools
+### Phase 4 — Advanced mathematics
 
-- [ ] Function graph plotting
-- [ ] Coordinate and graph interaction
-- [ ] Table of function values
-- [ ] Improved landscape scientific layout
+- [ ] Fractions and fraction conversion.
+- [ ] Unit conversion.
+- [ ] Statistics tools.
+- [ ] Permutations and combinations.
+- [ ] Matrix calculations.
+- [ ] Complex numbers.
+- [ ] Equation solver.
+- [ ] Graph plotting.
 
-### Phase 5 — Product quality
+### Phase 5 — Quality and release
 
-- [ ] Refine application icon and launch experience
-- [ ] Add UI and accessibility tests
-- [ ] Test across multiple Android devices
-- [ ] Profile performance and memory usage
-- [ ] Configure signed release builds
-- [ ] Prepare store listing materials
-- [ ] Complete release review
+- [ ] Complete automated test coverage for supported functions.
+- [ ] Resolve all critical build and runtime issues.
+- [ ] Test on multiple Android devices or emulators.
+- [ ] Configure secure release signing.
+- [ ] Generate and verify a release APK.
+- [ ] Prepare store listing, screenshots, and release notes.
 
 ---
 
-## Contributing
+## 13. Contribution and development standards
 
-Contributions, bug reports, and suggestions are welcome.
+All changes should follow these standards:
 
-When reporting a bug, include:
+- Keep features modular and maintainable.
+- Use clear names and consistent formatting.
+- Avoid duplicated calculation logic.
+- Add tests when introducing or changing mathematical behavior.
+- Validate input and handle errors safely.
+- Preserve existing working functionality.
+- Review dependency changes before adding them.
+- Keep documentation aligned with the actual application.
+- Do not mark unfinished features as complete.
+- Investigate failed CI builds rather than ignoring them.
 
-- Android version and device model
-- Steps to reproduce the issue
-- The expression or operation involved, if relevant
-- Expected behavior
-- Actual behavior
-- Screenshots or logs when useful
-
-For code contributions:
-
-1. Create a focused branch.
-2. Make a clear, limited change.
-3. Add or update tests.
-4. Run the unit tests and Android build.
-5. Submit a pull request describing the change.
-
-Do not include passwords, signing keys, personal data, or private device information in issues or commits.
+Changes should be small enough to review and test. Larger features should be divided into logical implementation steps.
 
 ---
 
-## Release checklist
+## 14. Future possibilities
 
-A release is not complete until:
+After the core scientific calculator is stable, the project may expand with:
 
-- [ ] Gradle sync succeeds.
-- [ ] Debug or release APK builds successfully.
-- [ ] Automated unit tests pass.
-- [ ] APK installs on an Android device or emulator.
-- [ ] Standard arithmetic is verified.
-- [ ] Scientific functions are verified in DEG and RAD modes.
-- [ ] History and settings behave correctly.
-- [ ] No critical crashes remain.
-- [ ] Layouts are checked on different screen sizes.
-- [ ] Release signing is configured securely.
-- [ ] Release notes accurately describe implemented features.
+- Programmer calculator mode.
+- Binary, octal, decimal, and hexadecimal conversions.
+- Matrix and vector tools.
+- Statistics and probability tools.
+- Graphing and equation-solving tools.
+- Unit and measurement conversions.
+- Exportable calculation history.
+- Customizable keypad layouts.
+- Additional mathematical utilities.
 
-**A successful source commit is not the same as a successful APK build. A successful build is not the same as a tested release.**
+These are future possibilities, not promises of features already available.
 
 ---
 
-## Developer and license
+## 15. Project identity
 
-**Project:** Calculator  
-**Developer / Project identity:** Diffy 01  
+**Name:** Calculator — Diffy 01  
+**Developer identity:** Diffy 01  
 **Platform:** Android  
-**Category:** Education / Productivity / Mathematics  
-**Language:** Kotlin  
-**Status:** Active development  
+**Primary language:** Kotlin  
+**Interface:** Jetpack Compose  
+**Application type:** Offline-first scientific calculator  
+**Repository:** `mojiolatunji34-cpu/calculator`  
 **License:** MIT
-
-See the [MIT License](LICENSE) for details.
 
 ---
 
@@ -548,4 +500,6 @@ See the [MIT License](LICENSE) for details.
 
 **Build it correctly. Test it properly. Improve it carefully.**
 
-Calculator — Diffy 01 aims to make advanced mathematics accessible through a reliable, attractive, and practical Android application.
+The goal is not simply to produce an APK quickly. The goal is to build a useful, reliable, accurate, and polished Android calculator with a strong foundation that can grow without repeatedly breaking existing features.
+
+**Calculator — More than basic mathematics.**
