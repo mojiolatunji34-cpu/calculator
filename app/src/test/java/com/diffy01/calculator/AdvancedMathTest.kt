@@ -22,6 +22,22 @@ class AdvancedMathTest {
         assertEquals(20.0, AdvancedMath.permutation(5,2),1e-10)
         assertEquals(10.0, AdvancedMath.combination(5,2),1e-10)
     }
+    @Test fun matrixAdvancedOperations() {
+        val matrix = listOf(listOf(1.0,2.0),listOf(3.0,4.0))
+        val inverse = AdvancedMath.inverse(matrix)
+        assertEquals(-2.0, inverse[0][0], 1e-10)
+        assertEquals(1.0, AdvancedMath.trace(matrix), 1e-10)
+        assertEquals(2, AdvancedMath.rank(matrix))
+        assertEquals(listOf(listOf(1.0,3.0),listOf(2.0,4.0)), AdvancedMath.transpose(matrix))
+    }
+    @Test fun richerStatisticsAndUnitGroups() {
+        val stats=AdvancedMath.statistics(listOf(1.0,2.0,2.0,3.0))
+        assertEquals(2.0, stats.getValue("Mode 1"), 1e-10)
+        assertEquals(1.0, stats.getValue("Sample variance"), 1e-10)
+        assertEquals(3600.0, AdvancedMath.convert(1.0,"h","s"),1e-10)
+        assertEquals(100.0, AdvancedMath.convert(1.0,"bar","kPa"),1e-10)
+        assertEquals(273.15, AdvancedMath.convert(32.0,"°F","K"),1e-10)
+    }
     @Test fun unitConversion() {
         assertEquals(1000.0, AdvancedMath.convert(1.0,"km","m"),1e-10)
         assertEquals(32.0, AdvancedMath.convert(0.0,"°C","°F"),1e-10)
