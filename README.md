@@ -503,3 +503,42 @@ These are future possibilities, not promises of features already available.
 The goal is not simply to produce an APK quickly. The goal is to build a useful, reliable, accurate, and polished Android calculator with a strong foundation that can grow without repeatedly breaking existing features.
 
 **Calculator — More than basic mathematics.**
+
+
+---
+
+## Version 1.1.0 implementation update
+
+The current source now includes an expanded Compose interface and a first implementation of the advanced suite.
+
+### Available in the current source
+- Standard and scientific calculator modes with degree/radian selection.
+- Light/dark appearance preference.
+- Calculation history saved locally, with clear and reuse actions.
+- Copy/share result actions and decimal-to-fraction conversion.
+- Memory clear, recall, add and subtract controls.
+- Safe expression parser with arithmetic, powers, factorial, percentages, trigonometric, inverse trigonometric, hyperbolic, logarithmic and common mathematical functions.
+- Quadratic and linear equation solving.
+- Fraction conversion and arithmetic utilities.
+- Matrix determinant and matrix multiplication utilities, with a 2×2-or-larger matrix input workspace.
+- Descriptive statistics, permutations and combinations.
+- Length, mass, volume and temperature conversions.
+- Date difference and elapsed-time calculations.
+- A basic 2D function plotter.
+- Scientific constants reference.
+- PIN-gated private notes vault using AES-GCM encryption and Android Keystore key storage. App backup is disabled to reduce the chance of vault data being copied through Android backup.
+- Expanded unit tests for advanced maths.
+
+### Security notes
+The private vault is a locally encrypted notes feature, not a full password manager. The user must create a 6–12 digit PIN; there is no hard-coded secret PIN. The vault screen should be locked when leaving it, and users should avoid storing highly sensitive account credentials in this early release. Losing the PIN may make the encrypted entries inaccessible.
+
+### Still requiring additional development and device validation
+- More detailed, worked step-by-step explanations for each calculation.
+- Larger matrix operations such as inverses, transpose, rank and eigenvalues.
+- More unit categories and configurable conversion precision.
+- Graph zoom/pan, multiple expressions and improved discontinuity handling.
+- Automatic vault timeout, PIN change/recovery design and a dedicated security review.
+- Accessibility review, tablet/foldable layout review and real-device testing.
+- Signed release build and Play Store preparation.
+
+A successful CI build verifies compilation and automated tests; it does not replace hands-on testing on physical Android devices.
