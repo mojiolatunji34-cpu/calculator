@@ -507,38 +507,50 @@ The goal is not simply to produce an APK quickly. The goal is to build a useful,
 
 ---
 
-## Version 1.1.0 implementation update
+## Version 1.2.0 implementation update
 
-The current source now includes an expanded Compose interface and a first implementation of the advanced suite.
+The current source includes the following implemented capabilities. Items in this section describe code present in the repository; they are not a claim that every feature has completed physical-device QA.
 
-### Available in the current source
-- Standard and scientific calculator modes with degree/radian selection.
-- Light/dark appearance preference.
-- Calculation history saved locally, with clear and reuse actions.
-- Copy/share result actions and decimal-to-fraction conversion.
-- Memory clear, recall, add and subtract controls.
-- Safe expression parser with arithmetic, powers, factorial, percentages, trigonometric, inverse trigonometric, hyperbolic, logarithmic and common mathematical functions.
-- Quadratic and linear equation solving.
-- Fraction conversion and arithmetic utilities.
-- Matrix determinant and matrix multiplication utilities, with a 2×2-or-larger matrix input workspace.
-- Descriptive statistics, permutations and combinations.
-- Length, mass, volume and temperature conversions.
+### Calculator and scientific engine
+- Standard arithmetic, expression parsing, parentheses, powers, factorials and percentages.
+- Trigonometric, inverse trigonometric, hyperbolic, logarithmic and exponential functions.
+- Degree/radian modes and scientific-notation number parsing.
+- Result formatting, copy/share, fraction conversion and memory controls.
+- Local calculation history with reuse and clear actions.
+
+### Advanced mathematics and tools
+- Linear and quadratic equation solvers.
+- Fraction conversion and arithmetic helpers.
+- Matrix determinant, multiplication, inverse, transpose, rank, trace and symmetric-matrix eigenvalues.
+- Descriptive statistics including mean, median, quartiles, range, mode, population/sample variance and standard deviation.
+- Permutations and combinations.
+- Complex-number addition, subtraction, multiplication, division, conjugate and magnitude.
+- Unit conversions for length, mass, volume, temperature, time, pressure and energy.
 - Date difference and elapsed-time calculations.
-- A basic 2D function plotter.
 - Scientific constants reference.
-- PIN-gated private notes vault using AES-GCM encryption and Android Keystore key storage. App backup is disabled to reduce the chance of vault data being copied through Android backup.
-- Expanded unit tests for advanced maths.
 
-### Security notes
-The private vault is a locally encrypted notes feature, not a full password manager. The user must create a 6–12 digit PIN; there is no hard-coded secret PIN. The vault screen should be locked when leaving it, and users should avoid storing highly sensitive account credentials in this early release. Losing the PIN may make the encrypted entries inaccessible.
+### Graphs, privacy and interface
+- Function plotter with two expressions, optional second curve, horizontal center control and adjustable x-range.
+- Dark/light appearance and degree/radian preferences.
+- PIN-gated private notes vault using PBKDF2-HMAC-SHA256 PIN hashing, AES-GCM encryption and Android Keystore key storage.
+- Vault PIN change without deleting encrypted notes, plus temporary lockout after repeated incorrect PIN attempts.
+- App backup disabled to reduce the chance of vault data being copied through Android backup.
+- Offline-first core calculations and native Jetpack Compose interface.
 
-### Still requiring additional development and device validation
-- More detailed, worked step-by-step explanations for each calculation.
-- Larger matrix operations such as inverses, transpose, rank and eigenvalues.
-- More unit categories and configurable conversion precision.
-- Graph zoom/pan, multiple expressions and improved discontinuity handling.
-- Automatic vault timeout, PIN change/recovery design and a dedicated security review.
-- Accessibility review, tablet/foldable layout review and real-device testing.
-- Signed release build and Play Store preparation.
+### Build and release status
+- GitHub Actions runs local unit tests, builds the debug APK and uploads the APK artifact.
+- The latest known successful baseline build completed tests, APK compilation and artifact upload before this feature expansion. The expanded source must pass its own latest workflow run before this version is considered build-verified.
+- Physical Android testing, tablet/foldable review, accessibility review, signed production release and Play Store submission still require separate validation and release setup.
 
-A successful CI build verifies compilation and automated tests; it does not replace hands-on testing on physical Android devices.
+### Vault safety note
+The vault is an encrypted private-notes feature, not a complete password manager. Keep highly sensitive account credentials out of it. The user is responsible for remembering the PIN; losing it may make encrypted entries inaccessible. Repeated incorrect PIN attempts trigger a temporary lockout.
+
+### Known limitations
+- The graph plotter currently provides manual horizontal pan and x-range zoom controls; it is not a full interactive multi-axis graphing package.
+- Eigenvalue calculation is limited to real symmetric matrices.
+- The calculator uses floating-point arithmetic for general expressions; displayed decimal precision is formatted and should not be mistaken for arbitrary-precision arithmetic.
+- Release signing, physical-device QA and production distribution are not complete until performed and verified.
+
+**Build it correctly. Test it properly. Improve it carefully.**
+
+**Calculator — DIFFY 01. More than basic mathematics.**
