@@ -29,6 +29,9 @@ class AdvancedMathTest {
         assertEquals(1.0, AdvancedMath.trace(matrix), 1e-10)
         assertEquals(2, AdvancedMath.rank(matrix))
         assertEquals(listOf(listOf(1.0,3.0),listOf(2.0,4.0)), AdvancedMath.transpose(matrix))
+        val eigen = AdvancedMath.symmetricEigenvalues(listOf(listOf(2.0,1.0),listOf(1.0,2.0)))
+        assertEquals(3.0, eigen[0], 1e-8)
+        assertEquals(1.0, eigen[1], 1e-8)
     }
     @Test fun richerStatisticsAndUnitGroups() {
         val stats=AdvancedMath.statistics(listOf(1.0,2.0,2.0,3.0))
