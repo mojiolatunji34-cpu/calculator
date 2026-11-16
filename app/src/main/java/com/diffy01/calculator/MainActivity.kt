@@ -174,13 +174,13 @@ private fun CalculatorScreen(
         }
         Divider(color=muted.copy(alpha=.35f),thickness=1.dp)
         if(scientific) {
-            val scienceRows=listOf(listOf("π",if(degree) "Deg" else "Rad","√","|x|"),listOf("sin","cos","tan","π"),listOf("ln","log","1/x","e"),listOf("eˣ","x²","xʸ",""))
+            val scienceRows=listOf(listOf("n!",if(degree) "Deg" else "Rad","√","|x|"),listOf("sin","cos","tan","π"),listOf("ln","log","1/x","e"),listOf("eˣ","x²","xʸ",""))
             scienceRows.forEach { row -> Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                 row.forEach { key ->
                     if(key.isEmpty()) Spacer(Modifier.weight(1f))
                     else Key(key,Modifier.weight(1f),surface,fg,false,compact=true) {
                         when(key) {
-                            "π" -> setExpression(expression+"pi")
+                            "n!" -> setExpression(expression+"!")
                             "Deg","Rad" -> Unit
                             "√" -> setExpression(expression+"sqrt(")
                             "|x|" -> setExpression(expression+"abs(")
