@@ -605,7 +605,7 @@ private fun SettingsScreen(surface:Color,fg:Color,muted:Color,dark:Boolean,onDar
             PinField("New private code",newCode){newCode=it.filter(Char::isDigit).take(6)}
             PinField("Confirm new code",confirmNewCode){confirmNewCode=it.filter(Char::isDigit).take(6)}
             PrimaryAction("CHANGE PRIVATE CODE") {
-                if (newCode.length != 4 && newCode.length != 6) privateMessage="Use 6–12 digits."
+                if (newCode.length != 4 && newCode.length != 6) privateMessage="Use exactly 4 or 6 digits."
                 else if (newCode != confirmNewCode) privateMessage="The new codes do not match."
                 else runCatching { recoveryCode=vault.changePin(currentCode.toCharArray(),newCode.toCharArray()); currentCode="";newCode="";confirmNewCode="";privateMessage="Private code changed. Save the new recovery code below." }
                     .onFailure { currentCode="";newCode="";confirmNewCode="";privateMessage=it.message ?: "Could not change the code." }
