@@ -117,6 +117,7 @@ private fun CalculatorApp(store: CalculationHistory) {
                                         "!" -> expression += "!"
                                         "π" -> expression += "pi"
                                         "e" -> expression += "e"
+                                        "ln", "log" -> expression += key + "("
                                         else -> expression += key
                                     }
                                     error = ""
