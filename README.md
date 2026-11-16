@@ -535,6 +535,7 @@ The current source includes the following implemented capabilities. Items in thi
 - Dark/light appearance and degree/radian preferences.
 - PIN-gated private notes vault using PBKDF2-HMAC-SHA256 PIN hashing, AES-GCM encryption and Android Keystore key storage.
 - Vault PIN change without deleting encrypted notes, five-minute automatic lock and temporary lockout after repeated incorrect PIN attempts.
+- One-time 12-digit recovery code, stored only as a salted PBKDF2 hash and rotated whenever the PIN is changed or recovered.
 - App backup disabled to reduce the chance of vault data being copied through Android backup.
 - Offline-first core calculations and native Jetpack Compose interface.
 
@@ -544,7 +545,7 @@ The current source includes the following implemented capabilities. Items in thi
 - Physical Android testing, tablet/foldable review, accessibility review, signed production release and Play Store submission still require separate validation and release setup.
 
 ### Vault safety note
-The vault is an encrypted private-notes feature, not a complete password manager. Keep highly sensitive account credentials out of it. The user is responsible for remembering the PIN; losing it may make encrypted entries inaccessible. Repeated incorrect PIN attempts trigger a temporary lockout.
+The vault is an encrypted private-notes feature, not a complete password manager. Keep highly sensitive account credentials out of it. The user should save the one-time recovery code offline. The recovery code is shown during setup and again after PIN changes or recovery; it is not stored in plaintext by the app. Losing both the PIN and recovery code may make encrypted entries inaccessible. Repeated incorrect PIN attempts trigger a temporary lockout.
 
 ### Known limitations
 - The graph plotter currently provides manual horizontal pan and x-range zoom controls; it is not a full interactive multi-axis graphing package.
