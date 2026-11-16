@@ -107,7 +107,7 @@ private fun CalculatorApp(store: CalculationHistory, vault: SecureVault, prefs: 
                     clipboard, context, Color(0xFF101418), Color(0xFFAFCBF4), Color(0xFF9AA8C4),
                     onOpenTools={ tab="TOOLS" },
                     onSecretCode={ code ->
-                        if (vault.isConfigured() && code.matches(Regex("[0-9]{6,12}")) && vault.verifyPin(code.toCharArray())) {
+                        if (vault.isConfigured() && code.matches(Regex("[0-9]{4}|[0-9]{6}")) && vault.verifyPin(code.toCharArray())) {
                             expression = ""
                             answer = "0"
                             error = ""
@@ -449,7 +449,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
         Text("PRIVATE GALLERY",color=fg,fontSize=19.sp,fontWeight=FontWeight.Bold)
         Text("Encrypted on this device. Use a PIN you do not use elsewhere. This is a simple private notes vault, not a replacement for a dedicated password manager.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=10.dp))
         if(!unlocked) {
-            PinField(if(configured) "Enter your private access code" else "Create a 4- or 6-digit code",pin){pin=it.filter(Char::isDigit).take(6)}
+            PinField(if(configured) "Enter your private access code" else "Create a 4- or 6-digit code",pin){pin=it.filter(Char::isDigit).take(12)}
             PrimaryAction(if(configured) "UNLOCK PRIVATE GALLERY" else "CREATE PRIVATE GALLERY") {
                 runCatching {
                     if(!configured) { recoveryCodeToSave=vault.setPin(pin.toCharArray()); configured=true; unlocked=true; message="Vault created. Write down the one-time recovery code shown below and keep it somewhere safe." }
@@ -461,7 +461,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
             if(configured) {
                 Text("Forgot your PIN? Use your recovery code to set a new one.",color=muted,fontSize=12.sp,modifier=Modifier.padding(top=12.dp))
                 PinField("12-digit recovery code",recoveryInput){recoveryInput=it.filter(Char::isDigit).take(12)}
-                PinField("New PIN (4 or 6 digits)",recoveryNewPin){recoveryNewPin=it.filter(Char::isDigit).take(12)}
+                PinField("New PIN (4 or 6 digits)",recoveryNewPin){recoveryNewPin=it.filter(Char::isDigit).take(6)}
                 PrimaryAction("RESET PIN WITH RECOVERY CODE") {
                     runCatching {
                         recoveryCodeToSave=vault.resetPinWithRecoveryCode(recoveryInput.toCharArray(),recoveryNewPin.toCharArray())
@@ -553,7 +553,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
                 else { entries=entries+VaultEntry(title,secret); vault.writeEntries(entries); title="";secret="";message="Saved securely on this device." }
             }
             Text("PIN SECURITY",color=fg,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=12.dp))
-            PinField("Current PIN",currentPin){currentPin=it.filter(Char::isDigit).take(6)}
+            PinField("Current PIN",currentPin){currentPin=it.filter(Char::isDigit).take(12)}
             PinField("New PIN (6-12 digits)",newPin){newPin=it.filter(Char::isDigit).take(6)}
             PrimaryAction("CHANGE VAULT PIN") {
                 runCatching { recoveryCodeToSave=vault.changePin(currentPin.toCharArray(),newPin.toCharArray()); currentPin="";newPin="";message="Vault PIN changed. Save your new recovery code below. Existing notes were preserved." }
@@ -615,7 +615,7 @@ private fun SettingsScreen(surface:Color,fg:Color,muted:Color,dark:Boolean,onDar
         if (recoveryCode.isNotBlank()) SelectionContainer { Text("RECOVERY CODE — SAVE THIS: $recoveryCode",color=fg,fontWeight=FontWeight.Bold,fontSize=13.sp,modifier=Modifier.fillMaxWidth().background(surface,RoundedCornerShape(12.dp)).padding(12.dp)) }
         Text("Privacy",color=fg,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=18.dp))
         Text("Calculations and vault items are stored locally. The app does not need internet access for calculations. Keep your device protected and do not store highly sensitive credentials in a basic notes vault.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=8.dp))
-        Text("DIFFY 01 • Scientific Suite • Version 1.3.0",color=muted,fontSize=11.sp,modifier=Modifier.padding(top=18.dp))
+        Text("DIFFY 01 • Scientific Suite • Version 1.4.0",color=muted,fontSize=11.sp,modifier=Modifier.padding(top=18.dp))
     }
 }
 @Composable private fun SettingRow(title:String,subtitle:String,value:Boolean,onChange:(Boolean)->Unit,fg:Color,muted:Color) {
