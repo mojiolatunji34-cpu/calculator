@@ -346,6 +346,8 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
     var configured by remember { mutableStateOf(vault.isConfigured()) }
     var title by remember { mutableStateOf("") }; var secret by remember { mutableStateOf("") }
     var currentPin by remember { mutableStateOf("") }; var newPin by remember { mutableStateOf("") }
+    var recoveryInput by remember { mutableStateOf("") }; var recoveryNewPin by remember { mutableStateOf("") }
+    var recoveryCodeToSave by remember { mutableStateOf("") }
     var entries by remember { mutableStateOf(emptyList<VaultEntry>()) }; var message by remember { mutableStateOf("") }
     LaunchedEffect(unlocked) {
         if (unlocked) {
@@ -362,11 +364,23 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
             PinField(if(configured) "Enter your vault PIN" else "Create a 6–12 digit PIN",pin){pin=it.filter(Char::isDigit).take(12)}
             PrimaryAction(if(configured) "UNLOCK VAULT" else "CREATE PRIVATE VAULT") {
                 runCatching {
-                    if(!configured) { vault.setPin(pin.toCharArray()); configured=true; unlocked=true; message="Vault created. Keep your PIN safe." }
+                    if(!configured) { recoveryCodeToSave=vault.setPin(pin.toCharArray()); configured=true; unlocked=true; message="Vault created. Write down the one-time recovery code shown below and keep it somewhere safe." }
                     else if(vault.verifyPin(pin.toCharArray())) { entries=vault.readEntries(); unlocked=true; message="Vault unlocked." }
                     else message="Incorrect PIN. Try again."
                     pin=""
                 }.onFailure { message=it.message ?: "Could not open vault" }
+            }
+            if(configured) {
+                Text("Forgot your PIN? Use your recovery code to set a new one.",color=muted,fontSize=12.sp,modifier=Modifier.padding(top=12.dp))
+                PinField("12-digit recovery code",recoveryInput){recoveryInput=it.filter(Char::isDigit).take(12)}
+                PinField("New PIN (6-12 digits)",recoveryNewPin){recoveryNewPin=it.filter(Char::isDigit).take(12)}
+                PrimaryAction("RESET PIN WITH RECOVERY CODE") {
+                    runCatching {
+                        recoveryCodeToSave=vault.resetPinWithRecoveryCode(recoveryInput.toCharArray(),recoveryNewPin.toCharArray())
+                        recoveryInput=""; recoveryNewPin=""; pin=""
+                        message="PIN reset. Write down your new recovery code below."
+                    }.onFailure { recoveryInput="";recoveryNewPin="";message=it.message ?: "Could not reset PIN" }
+                }
             }
         } else {
             Row(verticalAlignment=Alignment.CenterVertically) { Text("Your private items",color=fg,fontWeight=FontWeight.SemiBold,modifier=Modifier.weight(1f)); Text("LOCK",color=Accent,modifier=Modifier.clickable { unlocked=false; entries=emptyList() }.padding(8.dp)) }
@@ -392,6 +406,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
             }
         }
         if(message.isNotBlank()) Text(message,color=Accent,fontSize=12.sp,modifier=Modifier.padding(8.dp))
+        if(recoveryCodeToSave.isNotBlank()) Text("RECOVERY CODE — SAVE THIS: $recoveryCodeToSave",color=fg,fontWeight=FontWeight.Bold,fontSize=14.sp,modifier=Modifier.fillMaxWidth().background(surface,RoundedCornerShape(12.dp)).padding(12.dp))
     }
 }
 
