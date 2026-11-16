@@ -24,13 +24,14 @@ class SecureVault(context: Context) {
 
     fun isConfigured() = prefs.contains("pin_hash") && prefs.contains("pin_salt")
 
-    fun setPin(pin: CharArray) {
+    fun setPin(pin: CharArray): String {
         require(pin.size in 6..12 && pin.all { it.isDigit() }) { "PIN must contain 6–12 digits" }
-        val salt = ByteArray(16).also(random::nextBytes)
-        val hash = pinHash(pin, salt)
-        prefs.edit().putString("pin_salt", b64(salt)).putString("pin_hash", b64(hash)).apply()
+        val recoveryCode = generateRecoveryCode()
+        savePinHash(pin)
+        saveRecoveryHash(recoveryCode)
         encryptEntries(emptyList())
-        pin.fill('\u0000')
+        pin.fill(0.toChar())
+        return recoveryCode
     }
 
     @Synchronized
@@ -42,14 +43,7 @@ class SecureVault(context: Context) {
             val expected = prefs.getString("pin_hash", null)?.let(::unb64) ?: return false
             val actual = pinHash(pin, salt)
             val valid = java.security.MessageDigest.isEqual(expected, actual)
-            if (valid) {
-                prefs.edit().remove("failed_attempts").remove("locked_until").apply()
-            } else {
-                val attempts = prefs.getInt("failed_attempts", 0) + 1
-                val editor = prefs.edit().putInt("failed_attempts", attempts)
-                if (attempts >= 5) editor.putLong("locked_until", System.currentTimeMillis() + 30_000L).putInt("failed_attempts", 0)
-                editor.apply()
-            }
+            recordAttempt(valid)
             return valid
         } finally {
             pin.fill('\u0000')
@@ -86,6 +80,61 @@ class SecureVault(context: Context) {
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
         cipher.init(Cipher.ENCRYPT_MODE, getKey())
         prefs.edit().putString("iv", b64(cipher.iv)).putString("payload", b64(cipher.doFinal(data))).apply()
+    }
+
+    fun resetPinWithRecoveryCode(recoveryCode: CharArray, newPin: CharArray): String {
+        try {
+            require(newPin.size in 6..12 && newPin.all { it.isDigit() }) { "New PIN must contain 6–12 digits" }
+            require(verifyRecoveryCode(recoveryCode)) { "Recovery code is incorrect or temporarily locked" }
+            savePinHash(newPin)
+            val replacementCode = generateRecoveryCode()
+            saveRecoveryHash(replacementCode)
+            return replacementCode
+        } finally {
+            recoveryCode.fill(0.toChar())
+            newPin.fill(0.toChar())
+        }
+    }
+
+    private fun verifyRecoveryCode(code: CharArray): Boolean {
+        try {
+            if (System.currentTimeMillis() < prefs.getLong("locked_until", 0L)) return false
+            val salt = prefs.getString("recovery_salt", null)?.let(::unb64) ?: return false
+            val expected = prefs.getString("recovery_hash", null)?.let(::unb64) ?: return false
+            val valid = java.security.MessageDigest.isEqual(expected, pinHash(code, salt))
+            recordAttempt(valid)
+            return valid
+        } finally {
+            code.fill(0.toChar())
+        }
+    }
+
+    private fun savePinHash(pin: CharArray) {
+        val salt = ByteArray(16).also(random::nextBytes)
+        val hash = pinHash(pin, salt)
+        prefs.edit().putString("pin_salt", b64(salt)).putString("pin_hash", b64(hash)).apply()
+        pin.fill(0.toChar())
+    }
+
+    private fun saveRecoveryHash(code: String) {
+        val salt = ByteArray(16).also(random::nextBytes)
+        val hash = pinHash(code.toCharArray(), salt)
+        prefs.edit().putString("recovery_salt", b64(salt)).putString("recovery_hash", b64(hash)).apply()
+    }
+
+    private fun generateRecoveryCode(): String = buildString {
+        repeat(12) { append(random.nextInt(10)) }
+    }
+
+    private fun recordAttempt(valid: Boolean) {
+        if (valid) {
+            prefs.edit().remove("failed_attempts").remove("locked_until").apply()
+        } else {
+            val attempts = prefs.getInt("failed_attempts", 0) + 1
+            val editor = prefs.edit().putInt("failed_attempts", attempts)
+            if (attempts >= 5) editor.putLong("locked_until", System.currentTimeMillis() + 30_000L).putInt("failed_attempts", 0)
+            editor.apply()
+        }
     }
 
     private fun getKey(): SecretKey {
