@@ -200,6 +200,27 @@ object AdvancedMath {
         requireRectangular(matrix)
         require(matrix.size == matrix.first().size) { "Matrix must be square" }
     }
+    fun addMatrices(a: List<List<Double>>, b: List<List<Double>>): List<List<Double>> {
+        requireRectangular(a); requireRectangular(b)
+        require(a.size == b.size && a.first().size == b.first().size) { "Matrices must have the same dimensions" }
+        return a.indices.map { r -> a[r].indices.map { c -> a[r][c] + b[r][c] } }
+    }
+    fun subtractMatrices(a: List<List<Double>>, b: List<List<Double>>): List<List<Double>> {
+        requireRectangular(a); requireRectangular(b)
+        require(a.size == b.size && a.first().size == b.first().size) { "Matrices must have the same dimensions" }
+        return a.indices.map { r -> a[r].indices.map { c -> a[r][c] - b[r][c] } }
+    }
+    fun scaleMatrix(a: List<List<Double>>, scalar: Double): List<List<Double>> {
+        requireRectangular(a); require(scalar.isFinite()) { "Scalar must be finite" }
+        return a.map { row -> row.map { it * scalar } }
+    }
+    fun matrixPower(matrix: List<List<Double>>, exponent: Int): List<List<Double>> {
+        requireSquare(matrix); require(exponent in 0..8) { "Power must be an integer from 0 to 8" }
+        val n = matrix.size
+        var result = List(n) { r -> List(n) { c -> if (r == c) 1.0 else 0.0 } }
+        repeat(exponent) { result = multiply(result, matrix) }
+        return result
+    }
     fun factorial(n: Int): Double { require(n in 0..170) { "Enter an integer from 0 to 170" }; var x = 1.0; for (i in 2..n) x *= i; return x }
     fun permutation(n: Int, r: Int): Double { require(n >= 0 && r in 0..n) { "Require n ≥ r ≥ 0" }; var x=1.0; for(i in n-r+1..n) x*=i; return x }
     fun combination(n: Int, r: Int): Double { require(n >= 0 && r in 0..n) { "Require n ≥ r ≥ 0" }; val k=min(r,n-r); var x=1.0; for(i in 1..k) x=x*(n-k+i)/i; return x }
