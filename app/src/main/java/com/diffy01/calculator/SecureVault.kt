@@ -25,7 +25,7 @@ class SecureVault(context: Context) {
     fun isConfigured() = prefs.contains("pin_hash") && prefs.contains("pin_salt")
 
     fun setPin(pin: CharArray): String {
-        require(pin.size in 6..12 && pin.all { it.isDigit() }) { "PIN must contain 6–12 digits" }
+        require((pin.size == 4 || pin.size == 6) && pin.all { it.isDigit() }) { "PIN must contain exactly 4 or 6 digits" }
         val recoveryCode = generateRecoveryCode()
         savePinHash(pin)
         saveRecoveryHash(recoveryCode)
@@ -53,7 +53,7 @@ class SecureVault(context: Context) {
     fun changePin(currentPin: CharArray, newPin: CharArray): String {
         try {
             require(verifyPin(currentPin)) { "Current PIN is incorrect" }
-            require(newPin.size in 6..12 && newPin.all { it.isDigit() }) { "New PIN must contain 6–12 digits" }
+            require((newPin.size == 4 || newPin.size == 6) && newPin.all { it.isDigit() }) { "New PIN must contain exactly 4 or 6 digits" }
             savePinHash(newPin)
             val replacementCode = generateRecoveryCode()
             saveRecoveryHash(replacementCode)
@@ -89,7 +89,7 @@ class SecureVault(context: Context) {
 
     fun resetPinWithRecoveryCode(recoveryCode: CharArray, newPin: CharArray): String {
         try {
-            require(newPin.size in 6..12 && newPin.all { it.isDigit() }) { "New PIN must contain 6–12 digits" }
+            require((newPin.size == 4 || newPin.size == 6) && newPin.all { it.isDigit() }) { "New PIN must contain exactly 4 or 6 digits" }
             require(verifyRecoveryCode(recoveryCode)) { "Recovery code is incorrect or temporarily locked" }
             savePinHash(newPin)
             val replacementCode = generateRecoveryCode()
