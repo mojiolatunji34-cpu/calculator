@@ -161,7 +161,7 @@ private fun CalculatorScreen(
         }
         val rows=listOf(listOf("C","()","%","÷"),listOf("7","8","9","×"),listOf("4","5","6","−"),listOf("1","2","3","+"),listOf("+/−","0",".","="))
         rows.forEach { row -> Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-            row.forEach { key -> Key(key,Modifier.weight(1f),surface,fg,key in listOf("C","=","÷","×","−","+"),compact=false) {
+            row.forEach { key -> Key(key,Modifier.weight(1f),surface,fg,key in listOf("C","=","÷","×","−","+"),compact=scientific) {
                 when(key) {
                     "C" -> { setExpression("");setAnswer("0");setError("");setSteps(emptyList()) }
                     "()" -> setExpression(expression+if(expression.count{it=='('}>expression.count{it==')'}) ")" else "(")
