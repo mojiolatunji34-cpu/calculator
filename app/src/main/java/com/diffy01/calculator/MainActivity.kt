@@ -349,6 +349,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
     val context = LocalContext.current
     val mediaVault = remember { SecureMediaVault(context) }
     var mediaItems by remember { mutableStateOf(mediaVault.listItems()) }
+    var message by remember { mutableStateOf("") }
     var pin by remember { mutableStateOf("") }; var unlocked by remember { mutableStateOf(false) }
     val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
         if (uri != null) {
@@ -368,7 +369,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
     var currentPin by remember { mutableStateOf("") }; var newPin by remember { mutableStateOf("") }
     var recoveryInput by remember { mutableStateOf("") }; var recoveryNewPin by remember { mutableStateOf("") }
     var recoveryCodeToSave by remember { mutableStateOf("") }
-    var entries by remember { mutableStateOf(emptyList<VaultEntry>()) }; var message by remember { mutableStateOf("") }
+    var entries by remember { mutableStateOf(emptyList<VaultEntry>()) }
     LaunchedEffect(unlocked) {
         if (unlocked) {
             delay(5 * 60 * 1000L)
