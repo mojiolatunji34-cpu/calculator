@@ -436,7 +436,7 @@ private fun SettingsScreen(surface:Color,fg:Color,muted:Color,dark:Boolean,onDar
         PrimaryAction("CLEAR CALCULATION HISTORY",onClear)
         Text("Privacy",color=fg,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=18.dp))
         Text("Calculations and vault items are stored locally. The app does not need internet access for calculations. Keep your device protected and do not store highly sensitive credentials in a basic notes vault.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=8.dp))
-        Text("DIFFY 01 • Scientific Suite • Version 1.2.0",color=muted,fontSize=11.sp,modifier=Modifier.padding(top=18.dp))
+        Text("DIFFY 01 • Scientific Suite • Version 1.3.0",color=muted,fontSize=11.sp,modifier=Modifier.padding(top=18.dp))
     }
 }
 @Composable private fun SettingRow(title:String,subtitle:String,value:Boolean,onChange:(Boolean)->Unit,fg:Color,muted:Color) {
