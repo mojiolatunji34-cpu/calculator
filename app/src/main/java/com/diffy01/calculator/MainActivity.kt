@@ -273,7 +273,8 @@ private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
             }
             "CONVERTER" -> {
                 Text("Length, mass, volume, temperature, time, pressure and energy",color=muted,fontSize=13.sp)
-                Field("Value",amount){amount=it}; Field("From unit (km, m, cm, mm, mi, ft, in, kg, g, lb, oz, L, mL, °C, °F, K)",from){from=it}; Field("To unit",to){to=it}; Field("Decimal places (0-15)",precision){precision=it}
+                Text("Units: m, km, cm, mm, mi, ft, in • kg, g, lb, oz • L, mL, μL, m³ • °C, °F, K • s, min, h, day • Pa, kPa, bar, atm • J, kJ, cal",color=muted,fontSize=10.sp)
+                Field("Value",amount){amount=it}; Field("From unit",from){from=it}; Field("To unit",to){to=it}; Field("Decimal places (0-15)",precision){precision=it}
                 PrimaryAction("CONVERT") { output=runCatching { AdvancedMath.format(AdvancedMath.convert(amount.toDouble(),from.trim(),to.trim()),precision.toInt())+" "+to }.getOrElse { it.message ?: "Invalid conversion" } }
             }
             "DATE" -> {
