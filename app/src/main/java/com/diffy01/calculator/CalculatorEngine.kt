@@ -6,15 +6,34 @@ import kotlin.math.*
 data class EvaluatedCalculation(val value: Double, val steps: List<String>)
 
 object CalculatorEngine {
+    /**
+     * Completes only missing closing parentheses at the end of an expression.
+     * This lets keypad input such as "cos(30" evaluate as "cos(30)" without
+     * changing expressions that already have balanced parentheses.
+     */
+    internal fun completeMissingClosingParentheses(source: String): String {
+        var open = 0
+        var close = 0
+        source.forEach { char ->
+            when (char) {
+                '(' -> open++
+                ')' -> close++
+            }
+        }
+        return if (open > close) source + ")".repeat(open - close) else source
+    }
+
     fun evaluate(source: String, degrees: Boolean = true): Double {
-        val result = Parser(source, degrees).parse()
+        val completedSource = completeMissingClosingParentheses(source)
+        val result = Parser(completedSource, degrees).parse()
         if (!result.isFinite()) throw IllegalArgumentException("Result is outside the supported range")
         return if (abs(result) < 1e-12) 0.0 else result
     }
 
     fun evaluateWithSteps(source: String, degrees: Boolean = true): EvaluatedCalculation {
         val steps = mutableListOf<String>()
-        val result = Parser(source, degrees, steps).parse()
+        val completedSource = completeMissingClosingParentheses(source)
+        val result = Parser(completedSource, degrees, steps).parse()
         if (!result.isFinite()) throw IllegalArgumentException("Result is outside the supported range")
         val normalized = if (abs(result) < 1e-12) 0.0 else result
         if (steps.isEmpty()) steps.add("Evaluate $source = ${AdvancedMath.format(normalized)}")
