@@ -39,6 +39,12 @@ class SecureMediaVault(private val context: Context) {
     private val random = SecureRandom()
     private val keyAlias = "diffy01_secure_media_key"
 
+    init {
+        context.cacheDir.listFiles()
+            ?.filter { it.name.startsWith("private_preview_") }
+            ?.forEach { it.delete() }
+    }
+
     @Synchronized
     fun listItems(): List<SecureMediaItem> = runCatching {
         val encoded = preferences.getString("catalogue_ciphertext", null) ?: return emptyList()
