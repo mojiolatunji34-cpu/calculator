@@ -410,7 +410,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
                 val mime = context.contentResolver.getType(uri) ?: "application/octet-stream"
                 mediaVault.importFile(uri, name, mime)
                 mediaItems = mediaVault.listItems()
-                message = "File encrypted and added to your private vault."
+                message = "Encrypted copy added to your private gallery."
             }.onFailure { message = it.message ?: "Could not import this file." }
         }
     }
@@ -536,6 +536,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
                                     setMediaController(controller)
                                     setVideoPath(previewFile!!.absolutePath)
                                     setOnPreparedListener { it.isLooping = false }
+                                    setOnErrorListener { _, _, _ -> message = "This video format cannot be played on this Android device."; true }
                                     start()
                                 }
                             },
