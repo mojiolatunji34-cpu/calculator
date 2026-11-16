@@ -47,6 +47,15 @@ class CalculatorEngineTest {
         close(0.5, CalculatorEngine.evaluate("50%"))
     }
 
+    @Test fun missingClosingParenthesesAreCompletedAutomatically() {
+        close(0.5, CalculatorEngine.evaluate("cos(60"))
+        close(1.0, CalculatorEngine.evaluate("cos(60+0"))
+        close(5.0, CalculatorEngine.evaluate("(2+3"))
+        close(14.0, CalculatorEngine.evaluate("2*(3+4"))
+        assertEquals("cos(60)", CalculatorEngine.completeMissingClosingParentheses("cos(60"))
+        assertEquals("cos(60)", CalculatorEngine.completeMissingClosingParentheses("cos(60)"))
+    }
+
     @Test fun invalidOperationsAreRejected() {
         assertThrows(IllegalArgumentException::class.java) { CalculatorEngine.evaluate("1/0") }
         assertThrows(IllegalArgumentException::class.java) { CalculatorEngine.evaluate("sqrt(-1)") }
