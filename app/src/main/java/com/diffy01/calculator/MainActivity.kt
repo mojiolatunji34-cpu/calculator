@@ -302,7 +302,7 @@ private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
                 PrimaryAction("TRANSPOSE A") { output=runCatching { formatMatrix(AdvancedMath.transpose(parseMatrixInput(matrixA))) }.getOrElse { it.message ?: "Check matrix A" } }
                 PrimaryAction("RANK OF A") { output=runCatching { "rank(A) = ${AdvancedMath.rank(parseMatrixInput(matrixA))}" }.getOrElse { it.message ?: "Check matrix A" } }
                 PrimaryAction("TRACE OF A") { output=runCatching { "trace(A) = ${AdvancedMath.format(AdvancedMath.trace(parseMatrixInput(matrixA)))}" }.getOrElse { it.message ?: "Trace requires square A" } }
-                PrimaryAction("SYMMETRIC EIGENVALUES") { output=runCatching { AdvancedMath.symmetricEigenvalues(parseMatrixInput(matrixA)).mapIndexed { index, value -> "λ${index+1} = ${AdvancedMath.format(value)}" }.joinToString("\\n") }.getOrElse { it.message ?: "Enter a real symmetric matrix" } }
+                PrimaryAction("SYMMETRIC EIGENVALUES") { output=runCatching { AdvancedMath.symmetricEigenvalues(parseMatrixInput(matrixA)).mapIndexed { index, value -> "λ${index+1} = ${AdvancedMath.format(value)}" }.joinToString("\n") }.getOrElse { it.message ?: "Enter a real symmetric matrix" } }
             }
             "COMPLEX" -> {
                 Text("Complex numbers z = a + bi",color=muted,fontSize=13.sp)
@@ -335,7 +335,7 @@ private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
         ResultPanel(output,surface,fg)
         Text("SCIENTIFIC CONSTANTS",color=fg,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=18.dp))
         listOf("π  = 3.141592653589793","e  = 2.718281828459045","c  = 299,792,458 m/s","g  = 9.80665 m/s²","h  = 6.62607015 × 10⁻³⁴ J·s","Nₐ = 6.02214076 × 10²³ mol⁻¹").forEach { Text(it,color=muted,fontSize=13.sp,modifier=Modifier.padding(vertical=5.dp)) }
-        Text("Fraction tools are available from the calculator result using a/b. Matrix determinant and multiplication are provided by the maths engine and are being expanded into a dedicated matrix workspace.",color=muted,fontSize=11.sp,modifier=Modifier.padding(vertical=12.dp))
+        Text("Matrix tools support addition, subtraction, multiplication, scalar operations, powers, determinant, inverse, transpose, rank, trace and symmetric eigenvalues.",color=muted,fontSize=11.sp,modifier=Modifier.padding(vertical=12.dp))
     }
 }
 
@@ -581,7 +581,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
             }
             Text("PIN SECURITY",color=fg,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=12.dp))
             PinField("Current PIN",currentPin){currentPin=it.filter(Char::isDigit).take(12)}
-            PinField("New PIN (6-12 digits)",newPin){newPin=it.filter(Char::isDigit).take(6)}
+            PinField("New PIN (4 or 6 digits)",newPin){newPin=it.filter(Char::isDigit).take(6)}
             PrimaryAction("CHANGE VAULT PIN") {
                 runCatching { recoveryCodeToSave=vault.changePin(currentPin.toCharArray(),newPin.toCharArray()); currentPin="";newPin="";message="Vault PIN changed. Save your new recovery code below. Existing notes were preserved." }
                     .onFailure { currentPin="";newPin="";message=it.message ?: "Could not change PIN" }
