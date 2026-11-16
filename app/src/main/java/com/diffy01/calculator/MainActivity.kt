@@ -201,11 +201,13 @@ private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
     var n by remember { mutableStateOf("5") }; var r by remember { mutableStateOf("2") }
     var amount by remember { mutableStateOf("1") }; var from by remember { mutableStateOf("km") }; var to by remember { mutableStateOf("m") }
     var dateA by remember { mutableStateOf("2026-01-01") }; var dateB by remember { mutableStateOf("2026-12-31") }
+    var startTime by remember { mutableStateOf("09:00") }; var endTime by remember { mutableStateOf("17:30") }
+    var matrixA by remember { mutableStateOf("1,2;3,4") }; var matrixB by remember { mutableStateOf("5,6;7,8") }
     var output by remember { mutableStateOf("Choose a tool and enter values.") }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Text("ADVANCED TOOLS",color=fg,fontSize=19.sp,fontWeight=FontWeight.Bold)
         Row(Modifier.fillMaxWidth().padding(vertical=10.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-            listOf("EQUATIONS","STATISTICS","nPr / nCr","CONVERTER","DATE").forEach { item ->
+            listOf("EQUATIONS","STATISTICS","nPr / nCr","MATRIX","CONVERTER","DATE","TIME").forEach { item ->
                 Surface(Modifier.clickable { tool=item },color=if(tool==item) Accent else surface,shape=RoundedCornerShape(10.dp)) {
                     Text(item,color=if(tool==item) Color.White else muted,fontSize=9.sp,modifier=Modifier.padding(9.dp))
                 }
@@ -226,6 +228,12 @@ private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
                 Field("n",n){n=it}; Field("r",r){r=it}
                 PrimaryAction("CALCULATE") { output=runCatching { val nn=n.toInt(); val rr=r.toInt(); "Permutation nPr = ${AdvancedMath.format(AdvancedMath.permutation(nn,rr))}\nCombination nCr = ${AdvancedMath.format(AdvancedMath.combination(nn,rr))}" }.getOrElse { it.message ?: "Enter whole numbers" } }
             }
+            "MATRIX" -> {
+                Text("Enter square matrices. Separate columns with commas and rows with semicolons.",color=muted,fontSize=12.sp)
+                Field("Matrix A",matrixA){matrixA=it}; Field("Matrix B",matrixB){matrixB=it}
+                PrimaryAction("DETERMINANT OF A") { output=runCatching { val m=matrixA.split(";").map { row -> row.split(",").map { it.trim().toDouble() } }; "det(A) = ${AdvancedMath.format(AdvancedMath.determinant(m))}" }.getOrElse { it.message ?: "Check matrix A" } }
+                PrimaryAction("MULTIPLY A × B") { output=runCatching { fun parse(s:String)=s.split(";").map { row -> row.split(",").map { it.trim().toDouble() } }; AdvancedMath.multiply(parse(matrixA),parse(matrixB)).joinToString("\n") { row -> row.joinToString("    ") { AdvancedMath.format(it) } } }.getOrElse { it.message ?: "Check matrix dimensions" } }
+            }
             "CONVERTER" -> {
                 Text("Length, mass, volume and temperature",color=muted,fontSize=13.sp)
                 Field("Value",amount){amount=it}; Field("From unit (km, m, cm, mm, mi, ft, in, kg, g, lb, oz, L, mL, °C, °F, K)",from){from=it}; Field("To unit",to){to=it}
@@ -234,6 +242,11 @@ private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
             "DATE" -> {
                 Text("Dates use YYYY-MM-DD format",color=muted,fontSize=13.sp); Field("Start date",dateA){dateA=it}; Field("End date",dateB){dateB=it}
                 PrimaryAction("CALCULATE DAYS") { output=runCatching { val f=SimpleDateFormat("yyyy-MM-dd",Locale.US).apply { isLenient=false }; val d1=f.parse(dateA)!!; val d2=f.parse(dateB)!!; val days=(d2.time-d1.time)/86400000L; "${abs(days)} days between dates" }.getOrElse { "Use valid dates in YYYY-MM-DD format" } }
+            }
+            "TIME" -> {
+                Text("Calculate elapsed time using 24-hour HH:mm format",color=muted,fontSize=13.sp)
+                Field("Start time",startTime){startTime=it}; Field("End time",endTime){endTime=it}
+                PrimaryAction("CALCULATE DURATION") { output=runCatching { val f=SimpleDateFormat("HH:mm",Locale.US).apply { isLenient=false }; val start=f.parse(startTime)!!; val end=f.parse(endTime)!!; var minutes=(end.time-start.time)/60000L; if(minutes<0) minutes+=24*60; "${minutes/60} hours ${minutes%60} minutes (${minutes} minutes)" }.getOrElse { "Use valid 24-hour times, e.g. 09:30" } }
             }
         }
         ResultPanel(output,surface,fg)
