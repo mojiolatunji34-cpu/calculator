@@ -426,8 +426,10 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
         }
     }
     var message by remember { mutableStateOf("") }
+    var pickerInProgress by remember { mutableStateOf(false) }
     var pin by remember { mutableStateOf("") }; var unlocked by remember { mutableStateOf(initiallyUnlocked) }
     val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        pickerInProgress = false
         if (uri != null) {
             runCatching {
                 val name = context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
@@ -448,7 +450,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
     var entries by remember { mutableStateOf(emptyList<VaultEntry>()) }
     DisposableEffect(lifecycleOwner, unlocked) {
         val observer = LifecycleEventObserver { _, event ->
-            if (event == Lifecycle.Event.ON_STOP && unlocked) {
+            if (event == Lifecycle.Event.ON_STOP && unlocked && !pickerInProgress) {
                 closePreview()
                 unlocked = false
                 entries = emptyList()
@@ -501,6 +503,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
             Text("PRIVATE FILES",color=fg,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=8.dp))
             Text("Import photos, videos, PDFs and other files. Imported copies are encrypted in this app's private storage.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=6.dp))
             PrimaryAction("ADD PRIVATE PHOTOS / VIDEOS / FILES") {
+                pickerInProgress = true
                 mediaPicker.launch(arrayOf("image/*","video/*","application/pdf","text/*","application/octet-stream"))
             }
             if (mediaItems.isNotEmpty()) {
