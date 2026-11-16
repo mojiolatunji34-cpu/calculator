@@ -516,6 +516,7 @@ The current source includes the following implemented capabilities. Items in thi
 - Trigonometric, inverse trigonometric, hyperbolic, logarithmic and exponential functions.
 - Degree/radian modes and scientific-notation number parsing.
 - Result formatting, copy/share, fraction conversion and memory controls.
+- Operation-by-operation working for evaluated arithmetic and scientific expressions.
 - Local calculation history with reuse and clear actions.
 
 ### Advanced mathematics and tools
@@ -533,7 +534,7 @@ The current source includes the following implemented capabilities. Items in thi
 - Function plotter with two expressions, optional second curve, horizontal center control and adjustable x-range.
 - Dark/light appearance and degree/radian preferences.
 - PIN-gated private notes vault using PBKDF2-HMAC-SHA256 PIN hashing, AES-GCM encryption and Android Keystore key storage.
-- Vault PIN change without deleting encrypted notes, plus temporary lockout after repeated incorrect PIN attempts.
+- Vault PIN change without deleting encrypted notes, five-minute automatic lock and temporary lockout after repeated incorrect PIN attempts.
 - App backup disabled to reduce the chance of vault data being copied through Android backup.
 - Offline-first core calculations and native Jetpack Compose interface.
 
