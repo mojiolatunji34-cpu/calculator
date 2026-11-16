@@ -355,7 +355,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
             delay(5 * 60 * 1000L)
             unlocked = false
             entries = emptyList()
-            title = ""; secret = ""; currentPin = ""; newPin = ""; recoveryInput = ""; recoveryNewPin = ""
+            title = ""; secret = ""; currentPin = ""; newPin = ""; recoveryInput = ""; recoveryNewPin = ""; recoveryCodeToSave = ""
             message = "Vault locked automatically after five minutes."
         }
     }
@@ -385,7 +385,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
                 }
             }
         } else {
-            Row(verticalAlignment=Alignment.CenterVertically) { Text("Your private items",color=fg,fontWeight=FontWeight.SemiBold,modifier=Modifier.weight(1f)); Text("LOCK",color=Accent,modifier=Modifier.clickable { unlocked=false; entries=emptyList(); title="";secret="";currentPin="";newPin="";recoveryInput="";recoveryNewPin="" }.padding(8.dp)) }
+            Row(verticalAlignment=Alignment.CenterVertically) { Text("Your private items",color=fg,fontWeight=FontWeight.SemiBold,modifier=Modifier.weight(1f)); Text("LOCK",color=Accent,modifier=Modifier.clickable { unlocked=false; entries=emptyList(); title="";secret="";currentPin="";newPin="";recoveryInput="";recoveryNewPin="";recoveryCodeToSave="" }.padding(8.dp)) }
             Field("Item title",title){title=it}; Field("Private note or secret",secret){secret=it}
             PrimaryAction("SAVE ENCRYPTED ITEM") {
                 if(title.isBlank()||secret.isBlank()) message="Enter both a title and content."
