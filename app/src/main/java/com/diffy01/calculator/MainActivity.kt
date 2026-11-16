@@ -234,7 +234,10 @@ private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
                 Text("Enter square matrices. Separate columns with commas and rows with semicolons.",color=muted,fontSize=12.sp)
                 Field("Matrix A",matrixA){matrixA=it}; Field("Matrix B",matrixB){matrixB=it}
                 PrimaryAction("DETERMINANT OF A") { output=runCatching { val m=matrixA.split(";").map { row -> row.split(",").map { it.trim().toDouble() } }; "det(A) = ${AdvancedMath.format(AdvancedMath.determinant(m))}" }.getOrElse { it.message ?: "Check matrix A" } }
-                PrimaryAction("MULTIPLY A × B") { output=runCatching { val left: List<List<Double>> = parseMatrixInput(matrixA); val right: List<List<Double>> = parseMatrixInput(matrixB); val product: List<List<Double>> = AdvancedMath.multiply(left, right); product.joinToString("\n") { row: List<Double> -> row.joinToString("    ") { value: Double -> AdvancedMath.format(value) } } }.getOrElse { failure -> failure.message ?: "Check matrix dimensions" } }
+                PrimaryAction("MULTIPLY A × B") { output=runCatching { formatMatrix(AdvancedMath.multiply(parseMatrixInput(matrixA),parseMatrixInput(matrixB))) }.getOrElse { it.message ?: "Check matrix dimensions" } }
+                PrimaryAction("INVERSE OF A") { output=runCatching { formatMatrix(AdvancedMath.inverse(parseMatrixInput(matrixA))) }.getOrElse { it.message ?: "Matrix has no inverse" } }
+                PrimaryAction("TRANSPOSE A") { output=runCatching { formatMatrix(AdvancedMath.transpose(parseMatrixInput(matrixA))) }.getOrElse { it.message ?: "Check matrix A" } }
+                PrimaryAction("RANK AND TRACE OF A") { output=runCatching { val m=parseMatrixInput(matrixA); "Rank = ${AdvancedMath.rank(m)}\nTrace = ${AdvancedMath.format(AdvancedMath.trace(m))}" }.getOrElse { it.message ?: "Trace requires a square matrix" } }
             }
             "COMPLEX" -> {
                 Text("Complex numbers z = a + bi",color=muted,fontSize=13.sp)
@@ -249,7 +252,7 @@ private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
                 }
             }
             "CONVERTER" -> {
-                Text("Length, mass, volume and temperature",color=muted,fontSize=13.sp)
+                Text("Length, mass, volume, temperature, time, pressure and energy",color=muted,fontSize=13.sp)
                 Field("Value",amount){amount=it}; Field("From unit (km, m, cm, mm, mi, ft, in, kg, g, lb, oz, L, mL, °C, °F, K)",from){from=it}; Field("To unit",to){to=it}
                 PrimaryAction("CONVERT") { output=runCatching { AdvancedMath.format(AdvancedMath.convert(amount.toDouble(),from.trim(),to.trim()))+" "+to }.getOrElse { it.message ?: "Invalid conversion" } }
             }
