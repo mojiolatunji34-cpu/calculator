@@ -34,6 +34,7 @@ import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
 import kotlin.math.*
+import kotlinx.coroutines.delay
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -301,7 +302,7 @@ private fun GraphScreen(surface:Color,fg:Color,muted:Color,degree:Boolean) {
                 val origin=center.toFloatOrNull() ?: 0f
                 drawLine(muted.copy(alpha=.5f),Offset(0f,h/2),Offset(w,h/2),1.dp.toPx())
                 drawLine(muted.copy(alpha=.5f),Offset(w/2,0f),Offset(w/2,h),1.dp.toPx())
-                fun plot(expression:String, scale:Float) {
+                fun plot(expression:String, scale:Float, curveColor:Color) {
                     val path=Path(); var started=false
                     for(i in 0..500) {
                         val x=origin-limit+2*limit*i/500
@@ -311,10 +312,10 @@ private fun GraphScreen(surface:Color,fg:Color,muted:Color,degree:Boolean) {
                             if(!started){path.moveTo(px,py);started=true}else path.lineTo(px,py)
                         } else started=false
                     }
-                    drawPath(path,Accent,style=androidx.compose.ui.graphics.drawscope.Stroke(width=2.dp.toPx()))
+                    drawPath(path,curveColor,style=androidx.compose.ui.graphics.drawscope.Stroke(width=2.dp.toPx()))
                 }
-                plot(function,10f)
-                if(showSecond) plot(secondFunction,10f)
+                plot(function,10f,Accent)
+                if(showSecond) plot(secondFunction,10f,Color(0xFF23BFA5))
             }
         }
         Text("X window: \${(center.toDoubleOrNull() ?: 0.0)-(range.toDoubleOrNull() ?: 10.0)} to \${(center.toDoubleOrNull() ?: 0.0)+(range.toDoubleOrNull() ?: 10.0)}",color=muted,fontSize=11.sp)
@@ -329,6 +330,14 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
     var title by remember { mutableStateOf("") }; var secret by remember { mutableStateOf("") }
     var currentPin by remember { mutableStateOf("") }; var newPin by remember { mutableStateOf("") }
     var entries by remember { mutableStateOf(emptyList<VaultEntry>()) }; var message by remember { mutableStateOf("") }
+    LaunchedEffect(unlocked) {
+        if (unlocked) {
+            delay(5 * 60 * 1000L)
+            unlocked = false
+            entries = emptyList()
+            message = "Vault locked automatically after five minutes."
+        }
+    }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Text("PRIVATE VAULT",color=fg,fontSize=19.sp,fontWeight=FontWeight.Bold)
         Text("Encrypted on this device. Use a PIN you do not use elsewhere. This is a simple private notes vault, not a replacement for a dedicated password manager.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=10.dp))
