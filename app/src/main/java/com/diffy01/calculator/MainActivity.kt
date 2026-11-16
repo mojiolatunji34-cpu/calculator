@@ -273,14 +273,24 @@ private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
                 PrimaryAction("CALCULATE") { output=runCatching { val nn=n.toInt(); val rr=r.toInt(); "Permutation nPr = ${AdvancedMath.format(AdvancedMath.permutation(nn,rr))}\nCombination nCr = ${AdvancedMath.format(AdvancedMath.combination(nn,rr))}" }.getOrElse { it.message ?: "Enter whole numbers" } }
             }
             "MATRIX" -> {
-                Text("Enter square matrices. Separate columns with commas and rows with semicolons.",color=muted,fontSize=12.sp)
-                Field("Matrix A",matrixA){matrixA=it}; Field("Matrix B",matrixB){matrixB=it}
-                PrimaryAction("DETERMINANT OF A") { output=runCatching { val m=matrixA.split(";").map { row -> row.split(",").map { it.trim().toDouble() } }; "det(A) = ${AdvancedMath.format(AdvancedMath.determinant(m))}" }.getOrElse { it.message ?: "Check matrix A" } }
-                PrimaryAction("MULTIPLY A × B") { output=runCatching { formatMatrix(AdvancedMath.multiply(parseMatrixInput(matrixA),parseMatrixInput(matrixB))) }.getOrElse { it.message ?: "Check matrix dimensions" } }
-                PrimaryAction("INVERSE OF A") { output=runCatching { formatMatrix(AdvancedMath.inverse(parseMatrixInput(matrixA))) }.getOrElse { it.message ?: "Matrix has no inverse" } }
+                var scalar by remember { mutableStateOf("2") }
+                var exponent by remember { mutableStateOf("2") }
+                Text("Rows use semicolons; columns use commas. Example: 1,2;3,4. Rectangular matrices are supported where valid.",color=muted,fontSize=12.sp)
+                Field("Matrix A",matrixA){matrixA=it}
+                Field("Matrix B",matrixB){matrixB=it}
+                Field("Scalar k",scalar){scalar=it}
+                Field("Power n (0–8)",exponent){exponent=it}
+                PrimaryAction("A + B") { output=runCatching { formatMatrix(AdvancedMath.addMatrices(parseMatrixInput(matrixA),parseMatrixInput(matrixB))) }.getOrElse { it.message ?: "Check dimensions" } }
+                PrimaryAction("A − B") { output=runCatching { formatMatrix(AdvancedMath.subtractMatrices(parseMatrixInput(matrixA),parseMatrixInput(matrixB))) }.getOrElse { it.message ?: "Check dimensions" } }
+                PrimaryAction("A × B") { output=runCatching { formatMatrix(AdvancedMath.multiply(parseMatrixInput(matrixA),parseMatrixInput(matrixB))) }.getOrElse { it.message ?: "Check dimensions" } }
+                PrimaryAction("k × A") { output=runCatching { formatMatrix(AdvancedMath.scaleMatrix(parseMatrixInput(matrixA),scalar.toDouble())) }.getOrElse { it.message ?: "Enter a valid scalar" } }
+                PrimaryAction("A POWER n") { output=runCatching { formatMatrix(AdvancedMath.matrixPower(parseMatrixInput(matrixA),exponent.toInt())) }.getOrElse { it.message ?: "Power requires square A and integer 0–8" } }
+                PrimaryAction("DETERMINANT OF A") { output=runCatching { "det(A) = ${AdvancedMath.format(AdvancedMath.determinant(parseMatrixInput(matrixA)))}" }.getOrElse { it.message ?: "Enter a square matrix" } }
+                PrimaryAction("INVERSE OF A") { output=runCatching { formatMatrix(AdvancedMath.inverse(parseMatrixInput(matrixA))) }.getOrElse { it.message ?: "Matrix is singular or not square" } }
                 PrimaryAction("TRANSPOSE A") { output=runCatching { formatMatrix(AdvancedMath.transpose(parseMatrixInput(matrixA))) }.getOrElse { it.message ?: "Check matrix A" } }
-                PrimaryAction("RANK AND TRACE OF A") { output=runCatching { val m=parseMatrixInput(matrixA); "Rank = ${AdvancedMath.rank(m)}\nTrace = ${AdvancedMath.format(AdvancedMath.trace(m))}" }.getOrElse { it.message ?: "Trace requires a square matrix" } }
-                PrimaryAction("SYMMETRIC EIGENVALUES OF A") { output=runCatching { AdvancedMath.symmetricEigenvalues(parseMatrixInput(matrixA)).mapIndexed { index, value -> "λ${index + 1} = ${AdvancedMath.format(value)}" }.joinToString("\\n") }.getOrElse { it.message ?: "Enter a symmetric square matrix" } }
+                PrimaryAction("RANK OF A") { output=runCatching { "rank(A) = ${AdvancedMath.rank(parseMatrixInput(matrixA))}" }.getOrElse { it.message ?: "Check matrix A" } }
+                PrimaryAction("TRACE OF A") { output=runCatching { "trace(A) = ${AdvancedMath.format(AdvancedMath.trace(parseMatrixInput(matrixA)))}" }.getOrElse { it.message ?: "Trace requires square A" } }
+                PrimaryAction("SYMMETRIC EIGENVALUES") { output=runCatching { AdvancedMath.symmetricEigenvalues(parseMatrixInput(matrixA)).mapIndexed { index, value -> "λ${index+1} = ${AdvancedMath.format(value)}" }.joinToString("\\n") }.getOrElse { it.message ?: "Enter a real symmetric matrix" } }
             }
             "COMPLEX" -> {
                 Text("Complex numbers z = a + bi",color=muted,fontSize=13.sp)
@@ -323,45 +333,57 @@ private fun GraphScreen(surface:Color,fg:Color,muted:Color,degree:Boolean) {
     var secondFunction by remember { mutableStateOf("x^2/10") }
     var range by remember { mutableStateOf("10") }
     var center by remember { mutableStateOf("0") }
+    var yRange by remember { mutableStateOf("10") }
     var showSecond by remember { mutableStateOf(true) }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Text("FUNCTION GRAPH",color=fg,fontSize=19.sp,fontWeight=FontWeight.Bold)
-        Text("Plot functions of x. Change the center to pan horizontally and the half-range to zoom.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=8.dp))
+        Text("Plot f(x) and g(x). Use x, powers (^), brackets and functions such as sin(x), cos(x), sqrt(x) and ln(x).",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=8.dp))
         Field("f(x)",function){function=it}
         Field("g(x)",secondFunction){secondFunction=it}
-        Row(verticalAlignment=Alignment.CenterVertically) {
-            Text("Show second function",color=muted,modifier=Modifier.weight(1f))
-            Switch(checked=showSecond,onCheckedChange={showSecond=it})
-        }
+        Row(verticalAlignment=Alignment.CenterVertically) { Text("Show second function",color=muted,modifier=Modifier.weight(1f)); Switch(checked=showSecond,onCheckedChange={showSecond=it}) }
         Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
             Column(Modifier.weight(1f)) { Field("X half-range",range){range=it} }
             Column(Modifier.weight(1f)) { Field("X center",center){center=it} }
         }
-        Surface(color=surface,shape=RoundedCornerShape(18.dp),modifier=Modifier.fillMaxWidth().height(280.dp).padding(vertical=10.dp)) {
+        Field("Y half-range",yRange){yRange=it}
+        Row(horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+            OutlinedButton(onClick={center=((center.toDoubleOrNull() ?: 0.0)-10.0).toString()},modifier=Modifier.weight(1f)){Text("← Pan")}
+            OutlinedButton(onClick={center=((center.toDoubleOrNull() ?: 0.0)+10.0).toString()},modifier=Modifier.weight(1f)){Text("Pan →")}
+            OutlinedButton(onClick={range=((range.toDoubleOrNull() ?: 10.0)/2.0).coerceAtLeast(.1).toString()},modifier=Modifier.weight(1f)){Text("Zoom +")}
+            OutlinedButton(onClick={range=((range.toDoubleOrNull() ?: 10.0)*2.0).coerceAtMost(1000.0).toString()},modifier=Modifier.weight(1f)){Text("Zoom −")}
+        }
+        Surface(color=surface,shape=RoundedCornerShape(18.dp),modifier=Modifier.fillMaxWidth().height(300.dp).padding(vertical=10.dp)) {
             Canvas(Modifier.fillMaxSize().padding(12.dp)) {
                 val w=size.width; val h=size.height
-                val limit=range.toFloatOrNull()?.coerceIn(.1f,1000f) ?: 10f
-                val origin=center.toFloatOrNull() ?: 0f
-                drawLine(muted.copy(alpha=.5f),Offset(0f,h/2),Offset(w,h/2),1.dp.toPx())
-                drawLine(muted.copy(alpha=.5f),Offset(w/2,0f),Offset(w/2,h),1.dp.toPx())
-                fun plot(expression:String, scale:Float, curveColor:Color) {
-                    val path=Path(); var started=false
-                    for(i in 0..500) {
-                        val x=origin-limit+2*limit*i/500
-                        val y=runCatching { CalculatorEngine.evaluate(expression.replace(Regex("\\bx\\b"),"($x)"),degree).toFloat() }.getOrNull()
-                        if(y!=null && y.isFinite() && abs(y)<limit*scale) {
-                            val px=i/500f*w; val py=h/2-y/(2*limit)*h
-                            if(!started){path.moveTo(px,py);started=true}else path.lineTo(px,py)
-                        } else started=false
+                val xSpan=range.toFloatOrNull()?.takeIf{it.isFinite()}?.coerceIn(.1f,1000f) ?: 10f
+                val ySpan=yRange.toFloatOrNull()?.takeIf{it.isFinite()}?.coerceIn(.1f,100000f) ?: 10f
+                val xCenter=center.toFloatOrNull()?.takeIf{it.isFinite()} ?: 0f
+                val xMin=xCenter-xSpan; val xMax=xCenter+xSpan
+                fun px(x:Float)=((x-xMin)/(xMax-xMin))*w
+                fun py(y:Float)=h-((y+ySpan)/(2f*ySpan))*h
+                val grid=muted.copy(alpha=.16f)
+                for(i in 0..10) { val gx=w*i/10f; val gy=h*i/10f; drawLine(grid,Offset(gx,0f),Offset(gx,h),1.dp.toPx()); drawLine(grid,Offset(0f,gy),Offset(w,gy),1.dp.toPx()) }
+                if(xMin<=0f && xMax>=0f) drawLine(muted.copy(alpha=.8f),Offset(px(0f),0f),Offset(px(0f),h),1.5.dp.toPx())
+                drawLine(muted.copy(alpha=.8f),Offset(0f,py(0f)),Offset(w,py(0f)),1.5.dp.toPx())
+                fun plot(expr:String,color:Color) {
+                    val path=Path(); var active=false; var previousY=0f
+                    for(i in 0..1000) {
+                        val x=xMin+(xMax-xMin)*i/1000f
+                        val value=runCatching { CalculatorEngine.evaluate(expr.replace(Regex("\\bx\\b"),"($x)"),degree).toFloat() }.getOrNull()
+                        if(value!=null && value.isFinite() && abs(value)<=ySpan) {
+                            val y=py(value)
+                            if(!active || abs(y-previousY)>h*.45f) path.moveTo(px(x),y) else path.lineTo(px(x),y)
+                            active=true; previousY=y
+                        } else active=false
                     }
-                    drawPath(path,curveColor,style=androidx.compose.ui.graphics.drawscope.Stroke(width=2.dp.toPx()))
+                    drawPath(path,color,style=androidx.compose.ui.graphics.drawscope.Stroke(width=2.4.dp.toPx()))
                 }
-                plot(function,10f,Accent)
-                if(showSecond) plot(secondFunction,10f,Color(0xFF23BFA5))
+                plot(function,Accent); if(showSecond) plot(secondFunction,Color(0xFF23BFA5))
             }
         }
-        Text("X window: \${(center.toDoubleOrNull() ?: 0.0)-(range.toDoubleOrNull() ?: 10.0)} to \${(center.toDoubleOrNull() ?: 0.0)+(range.toDoubleOrNull() ?: 10.0)}",color=muted,fontSize=11.sp)
+        Text("X: ${(center.toDoubleOrNull() ?: 0.0)-(range.toDoubleOrNull() ?: 10.0)} to ${(center.toDoubleOrNull() ?: 0.0)+(range.toDoubleOrNull() ?: 10.0)}    Y: ±$yRange",color=muted,fontSize=11.sp)
         Text(if(degree) "Trigonometric functions use degrees." else "Trigonometric functions use radians.",color=muted,fontSize=11.sp)
+        Text("Blue: f(x)     Teal: g(x)",color=muted,fontSize=11.sp,modifier=Modifier.padding(top=5.dp))
     }
 }
 
