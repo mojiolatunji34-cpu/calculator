@@ -125,6 +125,7 @@ private fun CalculatorApp(store: CalculationHistory, vault: SecureVault, prefs: 
             }
         }
 }
+}
 
 @Composable
 private fun CalculatorScreen(
