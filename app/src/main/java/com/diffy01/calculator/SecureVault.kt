@@ -33,12 +33,27 @@ class SecureVault(context: Context) {
         pin.fill('\u0000')
     }
 
+    @Synchronized
     fun verifyPin(pin: CharArray): Boolean {
-        val salt = prefs.getString("pin_salt", null)?.let(::unb64) ?: return false
-        val expected = prefs.getString("pin_hash", null)?.let(::unb64) ?: return false
-        val actual = pinHash(pin, salt)
-        pin.fill('\u0000')
-        return java.security.MessageDigest.isEqual(expected, actual)
+        try {
+            val lockedUntil = prefs.getLong("locked_until", 0L)
+            if (System.currentTimeMillis() < lockedUntil) return false
+            val salt = prefs.getString("pin_salt", null)?.let(::unb64) ?: return false
+            val expected = prefs.getString("pin_hash", null)?.let(::unb64) ?: return false
+            val actual = pinHash(pin, salt)
+            val valid = java.security.MessageDigest.isEqual(expected, actual)
+            if (valid) {
+                prefs.edit().remove("failed_attempts").remove("locked_until").apply()
+            } else {
+                val attempts = prefs.getInt("failed_attempts", 0) + 1
+                val editor = prefs.edit().putInt("failed_attempts", attempts)
+                if (attempts >= 5) editor.putLong("locked_until", System.currentTimeMillis() + 30_000L).putInt("failed_attempts", 0)
+                editor.apply()
+            }
+            return valid
+        } finally {
+            pin.fill('\u0000')
+        }
     }
 
     fun changePin(currentPin: CharArray, newPin: CharArray) {
