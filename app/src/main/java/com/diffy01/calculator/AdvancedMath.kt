@@ -4,26 +4,37 @@ import kotlin.math.*
 import java.text.DecimalFormat
 import java.text.DecimalFormatSymbols
 import java.util.Locale
+import java.math.BigInteger
 
 data class Fraction(val numerator: Long, val denominator: Long) {
     init { require(denominator != 0L) { "A fraction cannot have a zero denominator" } }
-    fun normalized(): Fraction {
-        val sign = if (denominator < 0) -1L else 1L
-        val gcd = gcd(absSafe(numerator), absSafe(denominator))
-        return Fraction(sign * numerator / gcd, sign * denominator / gcd)
-    }
+    fun normalized(): Fraction = fromBig(BigInteger.valueOf(numerator), BigInteger.valueOf(denominator))
     fun decimal(): Double = numerator.toDouble() / denominator
     override fun toString(): String {
         val f = normalized()
         return if (f.denominator == 1L) "${f.numerator}" else "${f.numerator}/${f.denominator}"
     }
-    operator fun plus(other: Fraction) = Fraction(numerator * other.denominator + other.numerator * denominator, denominator * other.denominator).normalized()
-    operator fun minus(other: Fraction) = Fraction(numerator * other.denominator - other.numerator * denominator, denominator * other.denominator).normalized()
-    operator fun times(other: Fraction) = Fraction(numerator * other.numerator, denominator * other.denominator).normalized()
-    operator fun div(other: Fraction): Fraction { require(other.numerator != 0L) { "Cannot divide by zero" }; return Fraction(numerator * other.denominator, denominator * other.numerator).normalized() }
+    operator fun plus(other: Fraction) = fromBig(
+        BigInteger.valueOf(numerator) * BigInteger.valueOf(other.denominator) + BigInteger.valueOf(other.numerator) * BigInteger.valueOf(denominator),
+        BigInteger.valueOf(denominator) * BigInteger.valueOf(other.denominator)
+    )
+    operator fun minus(other: Fraction) = fromBig(
+        BigInteger.valueOf(numerator) * BigInteger.valueOf(other.denominator) - BigInteger.valueOf(other.numerator) * BigInteger.valueOf(denominator),
+        BigInteger.valueOf(denominator) * BigInteger.valueOf(other.denominator)
+    )
+    operator fun times(other: Fraction) = fromBig(
+        BigInteger.valueOf(numerator) * BigInteger.valueOf(other.numerator),
+        BigInteger.valueOf(denominator) * BigInteger.valueOf(other.denominator)
+    )
+    operator fun div(other: Fraction): Fraction {
+        require(other.numerator != 0L) { "Cannot divide by zero" }
+        return fromBig(BigInteger.valueOf(numerator) * BigInteger.valueOf(other.denominator),
+            BigInteger.valueOf(denominator) * BigInteger.valueOf(other.numerator))
+    }
     companion object {
         fun fromDecimal(value: Double, maxDenominator: Int = 100000): Fraction {
-            require(value.isFinite()) { "Enter a finite number" }
+            require(value.isFinite() && abs(value) <= Long.MAX_VALUE.toDouble()) { "Number is outside the supported fraction range" }
+            require(maxDenominator > 0) { "Maximum denominator must be positive" }
             var x = abs(value); var h1 = 1L; var h2 = 0L; var k1 = 0L; var k2 = 1L
             while (true) {
                 val a = floor(x).toLong()
@@ -35,12 +46,14 @@ data class Fraction(val numerator: Long, val denominator: Long) {
                 x = 1.0 / remainder
             }
         }
-        private fun gcd(a0: Long, b0: Long): Long {
-            var a = a0; var b = b0
-            while (b != 0L) { val t = b; b = a % b; a = t }
-            return if (a == 0L) 1L else a
+        private fun fromBig(numerator: BigInteger, denominator: BigInteger): Fraction {
+            require(denominator != BigInteger.ZERO) { "A fraction cannot have a zero denominator" }
+            var n = numerator
+            var d = denominator
+            if (d.signum() < 0) { n = n.negate(); d = d.negate() }
+            val gcd = n.abs().gcd(d)
+            return Fraction(n.divide(gcd).longValueExact(), d.divide(gcd).longValueExact())
         }
-        private fun absSafe(v: Long) = if (v == Long.MIN_VALUE) Long.MAX_VALUE else abs(v)
     }
 }
 
