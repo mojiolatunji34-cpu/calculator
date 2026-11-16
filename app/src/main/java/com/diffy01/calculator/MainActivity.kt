@@ -146,9 +146,21 @@ private fun CalculatorScreen(
     onOpenTools:()->Unit
 ) {
     Column(Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal=18.dp), verticalArrangement=Arrangement.spacedBy(5.dp)) {
-        Column(Modifier.fillMaxWidth().weight(1f).padding(horizontal=8.dp).padding(top=82.dp),verticalArrangement=Arrangement.Top,horizontalAlignment=Alignment.End) {
-            if(expression.isNotEmpty()) Text(expression,color=muted,fontSize=25.sp,textAlign=TextAlign.End,maxLines=2,modifier=Modifier.fillMaxWidth())
-            Text(if(error.isNotEmpty()) error else if(expression.isEmpty()) "0" else answer,color=if(error.isNotEmpty()) Color(0xFFFF737D) else Color(0xFFAFCBF4),fontSize=if(answer.length>12) 34.sp else 48.sp,textAlign=TextAlign.End,maxLines=2,modifier=Modifier.fillMaxWidth().padding(top=8.dp))
+        Row(Modifier.fillMaxWidth().padding(top=12.dp,bottom=5.dp),verticalAlignment=Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text("DIFFY 01",color=Accent,fontSize=11.sp,fontWeight=FontWeight.ExtraBold,letterSpacing=2.2.sp)
+                Text("SCIENTIFIC CALCULATOR",color=fg,fontSize=16.sp,fontWeight=FontWeight.Bold,letterSpacing=.6.sp)
+            }
+            Surface(color=surface,shape=RoundedCornerShape(12.dp)) {
+                Text(if(degree) "DEG MODE" else "RAD MODE",color=Accent,fontSize=9.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(horizontal=11.dp,vertical=9.dp))
+            }
+        }
+        Surface(color=surface,shape=RoundedCornerShape(24.dp),modifier=Modifier.fillMaxWidth().weight(1f).padding(vertical=4.dp)) {
+            Column(Modifier.fillMaxSize().padding(horizontal=18.dp,vertical=16.dp),verticalArrangement=Arrangement.Bottom,horizontalAlignment=Alignment.End) {
+                Text("EXPRESSION",color=Accent,fontSize=9.sp,fontWeight=FontWeight.Bold,modifier=Modifier.fillMaxWidth())
+                if(expression.isNotEmpty()) Text(expression,color=muted,fontSize=24.sp,textAlign=TextAlign.End,maxLines=3,modifier=Modifier.fillMaxWidth().padding(top=8.dp))
+                Text(if(error.isNotEmpty()) error else if(expression.isEmpty()) "0" else answer,color=if(error.isNotEmpty()) Color(0xFFFF737D) else fg,fontSize=if(answer.length>12) 34.sp else 46.sp,fontWeight=FontWeight.SemiBold,textAlign=TextAlign.End,maxLines=2,modifier=Modifier.fillMaxWidth().padding(top=8.dp))
+            }
         }
         if(steps.isNotEmpty()) Column(Modifier.fillMaxWidth().background(surface,RoundedCornerShape(12.dp)).padding(8.dp)) {
             Text("WORKING",color=Accent,fontSize=9.sp,fontWeight=FontWeight.Bold)
@@ -162,13 +174,13 @@ private fun CalculatorScreen(
         }
         Divider(color=muted.copy(alpha=.35f),thickness=1.dp)
         if(scientific) {
-            val scienceRows=listOf(listOf("⇄",if(degree) "Deg" else "Rad","√","|x|"),listOf("sin","cos","tan","π"),listOf("ln","log","1/x","e"),listOf("eˣ","x²","xʸ",""))
+            val scienceRows=listOf(listOf("π",if(degree) "Deg" else "Rad","√","|x|"),listOf("sin","cos","tan","π"),listOf("ln","log","1/x","e"),listOf("eˣ","x²","xʸ",""))
             scienceRows.forEach { row -> Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                 row.forEach { key ->
                     if(key.isEmpty()) Spacer(Modifier.weight(1f))
                     else Key(key,Modifier.weight(1f),surface,fg,false,compact=true) {
                         when(key) {
-                            "⇄" -> setExpression(expression+"pi")
+                            "π" -> setExpression(expression+"pi")
                             "Deg","Rad" -> Unit
                             "√" -> setExpression(expression+"sqrt(")
                             "|x|" -> setExpression(expression+"abs(")
@@ -212,7 +224,7 @@ private fun CalculatorScreen(
 
 @Composable
 private fun Key(label:String,modifier:Modifier,surface:Color,fg:Color,action:Boolean,compact:Boolean=false,onClick:()->Unit) {
-    val bg=if(label=="=") Color(0xFF9B405B) else surface
+    val bg=if(label=="=") Accent else if(action) Color(0xFF202B43) else surface
     Surface(
         modifier=modifier.padding(vertical=if(compact) 2.dp else 3.dp)
             .height(if(compact) 46.dp else 70.dp)
@@ -223,7 +235,7 @@ private fun Key(label:String,modifier:Modifier,surface:Color,fg:Color,action:Boo
         tonalElevation=0.dp
     ) {
         Box(contentAlignment=Alignment.Center) {
-            Text(label,color=if(label=="=") Color.White else if(action) Color(0xFFD99AAE) else Color(0xFFAFCBF4),
+            Text(label,color=if(label=="=") Color.White else if(action) Color(0xFFB9C5FF) else Color(0xFFAFCBF4),
                 fontSize=if(compact) 17.sp else 27.sp,fontWeight=FontWeight.Medium)
         }
     }
