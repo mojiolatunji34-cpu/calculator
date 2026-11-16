@@ -2,6 +2,7 @@ package com.diffy01.calculator
 
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
+import org.junit.Assert.assertThrows
 import org.junit.Test
 
 class AdvancedMathTest {
@@ -9,6 +10,10 @@ class AdvancedMathTest {
         assertEquals("3/4", Fraction.fromDecimal(0.75).toString())
         assertEquals("5/6", (Fraction(1,2) + Fraction(1,3)).toString())
         assertEquals(0.5, Fraction(1,2).decimal(), 1e-10)
+    }
+    @Test fun fractionArithmeticRejectsOverflowInsteadOfWrapping() {
+        assertThrows(ArithmeticException::class.java) { Fraction(Long.MAX_VALUE,1) + Fraction(1,1) }
+        assertEquals("-1/2", Fraction(1,-2).normalized().toString())
     }
     @Test fun linearAndQuadraticEquations() {
         assertEquals("x = -2", AdvancedMath.solveLinear(2.0,4.0))
