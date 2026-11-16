@@ -4,6 +4,8 @@ import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Canvas
@@ -344,7 +346,23 @@ private fun GraphScreen(surface:Color,fg:Color,muted:Color,degree:Boolean) {
 
 @Composable
 private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
+    val context = LocalContext.current
+    val mediaVault = remember { SecureMediaVault(context) }
+    var mediaItems by remember { mutableStateOf(mediaVault.listItems()) }
     var pin by remember { mutableStateOf("") }; var unlocked by remember { mutableStateOf(false) }
+    val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        if (uri != null) {
+            runCatching {
+                val name = context.contentResolver.query(uri, arrayOf(android.provider.OpenableColumns.DISPLAY_NAME), null, null, null)
+                    ?.use { cursor -> if (cursor.moveToFirst()) cursor.getString(0) else null }
+                    ?: "Private file"
+                val mime = context.contentResolver.getType(uri) ?: "application/octet-stream"
+                mediaVault.importFile(uri, name, mime)
+                mediaItems = mediaVault.listItems()
+                message = "File encrypted and added to your private vault."
+            }.onFailure { message = it.message ?: "Could not import this file." }
+        }
+    }
     var configured by remember { mutableStateOf(vault.isConfigured()) }
     var title by remember { mutableStateOf("") }; var secret by remember { mutableStateOf("") }
     var currentPin by remember { mutableStateOf("") }; var newPin by remember { mutableStateOf("") }
@@ -386,7 +404,32 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
                 }
             }
         } else {
-            Row(verticalAlignment=Alignment.CenterVertically) { Text("Your private items",color=fg,fontWeight=FontWeight.SemiBold,modifier=Modifier.weight(1f)); Text("LOCK",color=Accent,modifier=Modifier.clickable { unlocked=false; entries=emptyList(); title="";secret="";currentPin="";newPin="";recoveryInput="";recoveryNewPin="";recoveryCodeToSave="" }.padding(8.dp)) }
+            Row(verticalAlignment=Alignment.CenterVertically) { Text("Your private items",color=fg,fontWeight=FontWeight.SemiBold,modifier=Modifier.weight(1f)); Text("LOCK",color=Accent,modifier=Modifier.clickable { unlocked=false; entries=emptyList(); mediaItems=emptyList(); title="";secret="";currentPin="";newPin="";recoveryInput="";recoveryNewPin="";recoveryCodeToSave="" }.padding(8.dp)) }
+            Text("PRIVATE FILES",color=fg,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=8.dp))
+            Text("Import photos, videos, PDFs and other files. Imported copies are encrypted in this app's private storage.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=6.dp))
+            PrimaryAction("ADD PRIVATE PHOTOS / VIDEOS / FILES") {
+                mediaPicker.launch(arrayOf("image/*","video/*","application/pdf","text/*","application/octet-stream"))
+            }
+            if (mediaItems.isNotEmpty()) {
+                Text("${mediaItems.size} encrypted file(s)",color=Accent,fontSize=11.sp,fontWeight=FontWeight.Bold,modifier=Modifier.padding(vertical=5.dp))
+                mediaItems.forEach { item ->
+                    Row(Modifier.fillMaxWidth().background(surface,RoundedCornerShape(12.dp)).padding(10.dp),verticalAlignment=Alignment.CenterVertically) {
+                        Column(Modifier.weight(1f)) {
+                            Text(item.name,color=fg,fontSize=13.sp,fontWeight=FontWeight.SemiBold,maxLines=2)
+                            Text("${item.mimeType} • ${SecureMediaVault.displaySize(item.sizeBytes)}",color=muted,fontSize=10.sp)
+                        }
+                        Text("DELETE",color=Color(0xFFFF737D),fontSize=10.sp,modifier=Modifier.clickable {
+                            runCatching { mediaVault.deleteItem(item.id); mediaItems=mediaVault.listItems(); message="Private file deleted." }
+                                .onFailure { message=it.message ?: "Could not delete file." }
+                        }.padding(8.dp))
+                    }
+                    Spacer(Modifier.height(5.dp))
+                }
+            } else {
+                Text("No private files yet.",color=muted,fontSize=11.sp,modifier=Modifier.padding(vertical=5.dp))
+            }
+            Divider(color=muted.copy(alpha=.2f),modifier=Modifier.padding(vertical=10.dp))
+            Text("PRIVATE NOTES",color=fg,fontWeight=FontWeight.Bold)
             Field("Item title",title){title=it}; Field("Private note or secret",secret){secret=it}
             PrimaryAction("SAVE ENCRYPTED ITEM") {
                 if(title.isBlank()||secret.isBlank()) message="Enter both a title and content."
