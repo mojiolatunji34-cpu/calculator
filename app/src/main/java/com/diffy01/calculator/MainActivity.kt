@@ -138,12 +138,13 @@ private fun CalculatorScreen(
                 listOf("sin(","cos(","tan(","ln(","log("),
                 listOf("asin(","acos(","atan(","sqrt(","cbrt("),
                 listOf("sinh(","cosh(","tanh(","abs(","exp("),
-                listOf("π","e","^","!","floor("),
+                listOf("EXP","π","e","^","!"),
                 listOf("ceil(","("," ) ","%","⌫")
             )
             scienceRows.forEach { row -> KeyRow(row, surface, fg, muted) { key ->
                 when(key.trim()) {
                     "π" -> setExpression(expression+"pi")
+                    "EXP" -> setExpression(expression+"e")
                     "e" -> setExpression(expression+"e")
                     "⌫" -> setExpression(expression.dropLast(1))
                     else -> setExpression(expression+key.trim())
