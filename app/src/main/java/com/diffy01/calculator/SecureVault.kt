@@ -123,7 +123,8 @@ class SecureVault(context: Context) {
 
     private fun saveRecoveryHash(code: String) {
         val salt = ByteArray(16).also(random::nextBytes)
-        val hash = pinHash(code.toCharArray(), salt)
+        val chars = code.toCharArray()
+        val hash = try { pinHash(chars, salt) } finally { chars.fill(0.toChar()) }
         prefs.edit().putString("recovery_salt", b64(salt)).putString("recovery_hash", b64(hash)).apply()
     }
 
