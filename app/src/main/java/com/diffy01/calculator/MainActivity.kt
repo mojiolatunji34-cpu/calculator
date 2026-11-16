@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -26,6 +27,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.Role
@@ -356,7 +359,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
         Text("PRIVATE VAULT",color=fg,fontSize=19.sp,fontWeight=FontWeight.Bold)
         Text("Encrypted on this device. Use a PIN you do not use elsewhere. This is a simple private notes vault, not a replacement for a dedicated password manager.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=10.dp))
         if(!unlocked) {
-            Field(if(configured) "Enter your vault PIN" else "Create a 6–12 digit PIN",pin){pin=it.filter(Char::isDigit).take(12)}
+            PinField(if(configured) "Enter your vault PIN" else "Create a 6–12 digit PIN",pin){pin=it.filter(Char::isDigit).take(12)}
             PrimaryAction(if(configured) "UNLOCK VAULT" else "CREATE PRIVATE VAULT") {
                 runCatching {
                     if(!configured) { vault.setPin(pin.toCharArray()); configured=true; unlocked=true; message="Vault created. Keep your PIN safe." }
@@ -373,8 +376,8 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
                 else { entries=entries+VaultEntry(title,secret); vault.writeEntries(entries); title="";secret="";message="Saved securely on this device." }
             }
             Text("PIN SECURITY",color=fg,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=12.dp))
-            Field("Current PIN",currentPin){currentPin=it.filter(Char::isDigit).take(12)}
-            Field("New PIN (6-12 digits)",newPin){newPin=it.filter(Char::isDigit).take(12)}
+            PinField("Current PIN",currentPin){currentPin=it.filter(Char::isDigit).take(12)}
+            PinField("New PIN (6-12 digits)",newPin){newPin=it.filter(Char::isDigit).take(12)}
             PrimaryAction("CHANGE VAULT PIN") {
                 runCatching { vault.changePin(currentPin.toCharArray(),newPin.toCharArray()); currentPin="";newPin="";message="Vault PIN changed. Existing notes were preserved." }
                     .onFailure { currentPin="";newPin="";message=it.message ?: "Could not change PIN" }
@@ -414,6 +417,21 @@ private fun SettingsScreen(surface:Color,fg:Color,muted:Color,dark:Boolean,onDar
     Column(Modifier.fillMaxWidth().padding(vertical=5.dp)) {
         Text(label,color=MaterialTheme.colorScheme.onBackground,fontSize=11.sp)
         BasicTextField(value=value,onValueChange=onChange,modifier=Modifier.fillMaxWidth().padding(top=5.dp).background(MaterialTheme.colorScheme.surface,RoundedCornerShape(12.dp)).padding(13.dp),singleLine=true,textStyle=androidx.compose.ui.text.TextStyle(color=MaterialTheme.colorScheme.onSurface,fontSize=15.sp),decorationBox={ inner -> if(value.isEmpty()) Text("Enter value",color=MaterialTheme.colorScheme.onSurface.copy(alpha=.45f)); inner() })
+    }
+}
+@Composable private fun PinField(label:String,value:String,onChange:(String)->Unit) {
+    Column(Modifier.fillMaxWidth().padding(vertical=5.dp)) {
+        Text(label,color=MaterialTheme.colorScheme.onBackground,fontSize=11.sp)
+        BasicTextField(
+            value=value,
+            onValueChange=onChange,
+            modifier=Modifier.fillMaxWidth().padding(top=5.dp).background(MaterialTheme.colorScheme.surface,RoundedCornerShape(12.dp)).padding(13.dp),
+            singleLine=true,
+            visualTransformation=PasswordVisualTransformation(),
+            keyboardOptions=KeyboardOptions(keyboardType=KeyboardType.NumberPassword),
+            textStyle=androidx.compose.ui.text.TextStyle(color=MaterialTheme.colorScheme.onSurface,fontSize=15.sp),
+            decorationBox={ inner -> if(value.isEmpty()) Text("Enter PIN",color=MaterialTheme.colorScheme.onSurface.copy(alpha=.45f)); inner() }
+        )
     }
 }
 @Composable private fun PrimaryAction(label:String,onClick:()->Unit) {
