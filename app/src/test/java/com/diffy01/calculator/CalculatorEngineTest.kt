@@ -26,6 +26,15 @@ class CalculatorEngineTest {
         close(1.0, CalculatorEngine.evaluate("sin(1.5707963267948966)", false))
     }
 
+    @Test fun scientificNotationAndComplexArithmetic() {
+        close(1500.0, CalculatorEngine.evaluate("1.5e3"))
+        close(0.002, CalculatorEngine.evaluate("2E-3"))
+        val z = ComplexNumber(3.0,2.0)
+        val w = ComplexNumber(1.0,-4.0)
+        assertEquals(ComplexNumber(11.0,-10.0), z*w)
+        assertEquals(ComplexNumber(3.0,2.0), z.conjugate().conjugate())
+    }
+
     @Test fun factorialAndPercent() {
         close(120.0, CalculatorEngine.evaluate("5!"))
         close(0.5, CalculatorEngine.evaluate("50%"))
@@ -35,5 +44,6 @@ class CalculatorEngineTest {
         assertThrows(IllegalArgumentException::class.java) { CalculatorEngine.evaluate("1/0") }
         assertThrows(IllegalArgumentException::class.java) { CalculatorEngine.evaluate("sqrt(-1)") }
         assertThrows(IllegalArgumentException::class.java) { CalculatorEngine.evaluate("(2+3") }
+        assertThrows(IllegalArgumentException::class.java) { CalculatorEngine.evaluate("1e") }
     }
 }
