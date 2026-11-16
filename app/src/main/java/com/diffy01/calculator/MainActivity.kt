@@ -387,7 +387,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
             PrimaryAction(if(configured) "UNLOCK VAULT" else "CREATE PRIVATE VAULT") {
                 runCatching {
                     if(!configured) { recoveryCodeToSave=vault.setPin(pin.toCharArray()); configured=true; unlocked=true; message="Vault created. Write down the one-time recovery code shown below and keep it somewhere safe." }
-                    else if(vault.verifyPin(pin.toCharArray())) { entries=vault.readEntries(); unlocked=true; message="Vault unlocked." }
+                    else if(vault.verifyPin(pin.toCharArray())) { entries=vault.readEntries(); mediaItems=mediaVault.listItems(); unlocked=true; message="Vault unlocked." }
                     else message="Incorrect PIN. Try again."
                     pin=""
                 }.onFailure { message=it.message ?: "Could not open vault" }
