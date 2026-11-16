@@ -202,12 +202,14 @@ private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
     var amount by remember { mutableStateOf("1") }; var from by remember { mutableStateOf("km") }; var to by remember { mutableStateOf("m") }
     var dateA by remember { mutableStateOf("2026-01-01") }; var dateB by remember { mutableStateOf("2026-12-31") }
     var startTime by remember { mutableStateOf("09:00") }; var endTime by remember { mutableStateOf("17:30") }
+    var z1r by remember { mutableStateOf("3") }; var z1i by remember { mutableStateOf("2") }
+    var z2r by remember { mutableStateOf("1") }; var z2i by remember { mutableStateOf("-4") }
     var matrixA by remember { mutableStateOf("1,2;3,4") }; var matrixB by remember { mutableStateOf("5,6;7,8") }
     var output by remember { mutableStateOf("Choose a tool and enter values.") }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Text("ADVANCED TOOLS",color=fg,fontSize=19.sp,fontWeight=FontWeight.Bold)
         Row(Modifier.fillMaxWidth().padding(vertical=10.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-            listOf("EQUATIONS","STATISTICS","nPr / nCr","MATRIX","CONVERTER","DATE","TIME").forEach { item ->
+            listOf("EQUATIONS","STATISTICS","nPr / nCr","MATRIX","COMPLEX","CONVERTER","DATE","TIME").forEach { item ->
                 Surface(Modifier.clickable { tool=item },color=if(tool==item) Accent else surface,shape=RoundedCornerShape(10.dp)) {
                     Text(item,color=if(tool==item) Color.White else muted,fontSize=9.sp,modifier=Modifier.padding(9.dp))
                 }
@@ -233,6 +235,18 @@ private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
                 Field("Matrix A",matrixA){matrixA=it}; Field("Matrix B",matrixB){matrixB=it}
                 PrimaryAction("DETERMINANT OF A") { output=runCatching { val m=matrixA.split(";").map { row -> row.split(",").map { it.trim().toDouble() } }; "det(A) = ${AdvancedMath.format(AdvancedMath.determinant(m))}" }.getOrElse { it.message ?: "Check matrix A" } }
                 PrimaryAction("MULTIPLY A × B") { output=runCatching { val left: List<List<Double>> = parseMatrixInput(matrixA); val right: List<List<Double>> = parseMatrixInput(matrixB); val product: List<List<Double>> = AdvancedMath.multiply(left, right); product.joinToString("\n") { row: List<Double> -> row.joinToString("    ") { value: Double -> AdvancedMath.format(value) } } }.getOrElse { failure -> failure.message ?: "Check matrix dimensions" } }
+            }
+            "COMPLEX" -> {
+                Text("Complex numbers z = a + bi",color=muted,fontSize=13.sp)
+                Field("z1 real part",z1r){z1r=it}; Field("z1 imaginary part",z1i){z1i=it}
+                Field("z2 real part",z2r){z2r=it}; Field("z2 imaginary part",z2i){z2i=it}
+                PrimaryAction("CALCULATE COMPLEX OPERATIONS") {
+                    output=runCatching {
+                        val x=ComplexNumber(z1r.toDouble(),z1i.toDouble())
+                        val y=ComplexNumber(z2r.toDouble(),z2i.toDouble())
+                        "z1 + z2 = ${(x+y).format()}\nz1 - z2 = ${(x-y).format()}\nz1 * z2 = ${(x*y).format()}\nz1 / z2 = ${(x/y).format()}\n|z1| = ${AdvancedMath.format(x.magnitude())}\nconjugate(z1) = ${x.conjugate().format()}"
+                    }.getOrElse { it.message ?: "Check complex-number values" }
+                }
             }
             "CONVERTER" -> {
                 Text("Length, mass, volume and temperature",color=muted,fontSize=13.sp)
