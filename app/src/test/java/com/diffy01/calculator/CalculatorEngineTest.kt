@@ -77,4 +77,37 @@ class CalculatorEngineTest {
         assertThrows(IllegalArgumentException::class.java) { CalculatorEngine.evaluate("sqrt(-1)") }
         assertThrows(IllegalArgumentException::class.java) { CalculatorEngine.evaluate("1e") }
     }
+    @Test fun matrixOperationsHandleSquareAndRectangularInputs() {
+        val a = listOf(listOf(1.0, 2.0), listOf(3.0, 4.0))
+        val b = listOf(listOf(5.0, 6.0), listOf(7.0, 8.0))
+        assertEquals(listOf(listOf(6.0, 8.0), listOf(10.0, 12.0)), AdvancedMath.addMatrices(a, b))
+        assertEquals(listOf(listOf(-4.0, -4.0), listOf(-4.0, -4.0)), AdvancedMath.subtractMatrices(a, b))
+        assertEquals(listOf(listOf(19.0, 22.0), listOf(43.0, 50.0)), AdvancedMath.multiply(a, b))
+        assertEquals(listOf(listOf(2.0, 4.0), listOf(6.0, 8.0)), AdvancedMath.scaleMatrix(a, 2.0))
+        assertEquals(listOf(listOf(7.0, 10.0), listOf(15.0, 22.0)), AdvancedMath.matrixPower(a, 2))
+        assertEquals(listOf(listOf(1.0, 3.0), listOf(2.0, 4.0)), AdvancedMath.transpose(a))
+        close(-2.0, AdvancedMath.determinant(a))
+        assertEquals(2, AdvancedMath.rank(a))
+        assertEquals(5.0, AdvancedMath.trace(a), 1e-8)
+    }
+
+    @Test fun matrixOperationsRejectInvalidDimensionsAndSingularInverse() {
+        val rectangular = listOf(listOf(1.0, 2.0, 3.0), listOf(4.0, 5.0, 6.0))
+        assertThrows(IllegalArgumentException::class.java) {
+            AdvancedMath.addMatrices(rectangular, listOf(listOf(1.0), listOf(2.0)))
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            AdvancedMath.matrixPower(rectangular, 2)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            AdvancedMath.inverse(listOf(listOf(1.0, 2.0), listOf(2.0, 4.0)))
+        }
+    }
+
+    @Test fun graphExpressionsEvaluateAfterReplacingX() {
+        close(0.5, CalculatorEngine.evaluate("sin((30.0))"))
+        close(4.0, CalculatorEngine.evaluate("((2.0))^2"))
+        close(1.0, CalculatorEngine.evaluate("sqrt((1.0))"))
+    }
+
 }
