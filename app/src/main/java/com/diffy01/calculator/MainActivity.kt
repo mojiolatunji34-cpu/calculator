@@ -384,3 +384,6 @@ private fun SettingsScreen(surface:Color,fg:Color,muted:Color,dark:Boolean,onDar
 
 
 private fun parseMatrixInput(input: String): List<List<Double>> = input.split(";").map { row -> row.split(",").map { cell -> cell.trim().toDouble() } }
+
+private fun formatMatrix(matrix: List<List<Double>>): String =
+    matrix.joinToString("\n") { row -> row.joinToString("    ") { AdvancedMath.format(it) } }
