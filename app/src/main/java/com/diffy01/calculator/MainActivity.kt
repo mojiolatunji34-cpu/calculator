@@ -2,6 +2,9 @@ package com.diffy01.calculator
 
 import android.content.Context
 import android.content.Intent
+import android.graphics.BitmapFactory
+import android.widget.VideoView
+import android.widget.MediaController
 import android.os.Bundle
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -10,6 +13,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.compose.setContent
 import androidx.compose.animation.animateColorAsState
 import androidx.compose.foundation.Canvas
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -28,6 +32,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
@@ -41,6 +46,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.viewinterop.AndroidView
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -368,6 +374,19 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
     val context = LocalContext.current
     val mediaVault = remember { SecureMediaVault(context) }
     var mediaItems by remember { mutableStateOf(mediaVault.listItems()) }
+    var previewItem by remember { mutableStateOf<SecureMediaItem?>(null) }
+    var previewFile by remember { mutableStateOf<java.io.File?>(null) }
+    var previewBitmap by remember { mutableStateOf<android.graphics.Bitmap?>(null) }
+    var videoView by remember { mutableStateOf<VideoView?>(null) }
+    fun closePreview() {
+        videoView?.stopPlayback()
+        videoView = null
+        previewFile?.delete()
+        previewFile = null
+        previewBitmap = null
+        previewItem = null
+    }
+    DisposableEffect(Unit) { onDispose { closePreview() } }
     var message by remember { mutableStateOf("") }
     var pin by remember { mutableStateOf("") }; var unlocked by remember { mutableStateOf(initiallyUnlocked) }
     val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -395,6 +414,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
             unlocked = false
             entries = emptyList()
             mediaItems = emptyList()
+            closePreview()
             title = ""; secret = ""; currentPin = ""; newPin = ""; recoveryInput = ""; recoveryNewPin = ""; recoveryCodeToSave = ""
             message = "Vault locked automatically after five minutes."
         }
@@ -425,7 +445,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
                 }
             }
         } else {
-            Row(verticalAlignment=Alignment.CenterVertically) { Text("Your private items",color=fg,fontWeight=FontWeight.SemiBold,modifier=Modifier.weight(1f)); Text("LOCK",color=Accent,modifier=Modifier.clickable { unlocked=false; entries=emptyList(); mediaItems=emptyList(); title="";secret="";currentPin="";newPin="";recoveryInput="";recoveryNewPin="";recoveryCodeToSave="" }.padding(8.dp)) }
+            Row(verticalAlignment=Alignment.CenterVertically) { Text("Your private items",color=fg,fontWeight=FontWeight.SemiBold,modifier=Modifier.weight(1f)); Text("LOCK",color=Accent,modifier=Modifier.clickable { closePreview(); unlocked=false; entries=emptyList(); mediaItems=emptyList(); title="";secret="";currentPin="";newPin="";recoveryInput="";recoveryNewPin="";recoveryCodeToSave="" }.padding(8.dp)) }
             Text("PRIVATE FILES",color=fg,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=8.dp))
             Text("Import photos, videos, PDFs and other files. Imported copies are encrypted in this app's private storage.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=6.dp))
             PrimaryAction("ADD PRIVATE PHOTOS / VIDEOS / FILES") {
@@ -439,8 +459,23 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
                             Text(item.name,color=fg,fontSize=13.sp,fontWeight=FontWeight.SemiBold,maxLines=2)
                             Text("${item.mimeType} • ${SecureMediaVault.displaySize(item.sizeBytes)}",color=muted,fontSize=10.sp)
                         }
+                        if (item.mimeType.startsWith("image/") || item.mimeType.startsWith("video/")) {
+                            Text("OPEN",color=Accent,fontSize=10.sp,modifier=Modifier.clickable {
+                                runCatching {
+                                    closePreview()
+                                    val decrypted = mediaVault.decryptToCache(item.id)
+                                    previewFile = decrypted
+                                    previewItem = item
+                                    if (item.mimeType.startsWith("image/")) {
+                                        previewBitmap = BitmapFactory.decodeFile(decrypted.absolutePath)
+                                            ?: error("This image format cannot be previewed.")
+                                    }
+                                    message = ""
+                                }.onFailure { closePreview(); message=it.message ?: "Could not preview this file." }
+                            }.padding(8.dp))
+                        }
                         Text("DELETE",color=Color(0xFFFF737D),fontSize=10.sp,modifier=Modifier.clickable {
-                            runCatching { mediaVault.deleteItem(item.id); mediaItems=mediaVault.listItems(); message="Private file deleted." }
+                            runCatching { closePreview(); mediaVault.deleteItem(item.id); mediaItems=mediaVault.listItems(); message="Private file deleted." }
                                 .onFailure { message=it.message ?: "Could not delete file." }
                         }.padding(8.dp))
                     }
@@ -448,6 +483,35 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
                 }
             } else {
                 Text("No private files yet.",color=muted,fontSize=11.sp,modifier=Modifier.padding(vertical=5.dp))
+            }
+            if (previewItem != null && previewFile != null) {
+                Column(Modifier.fillMaxWidth().background(surface,RoundedCornerShape(14.dp)).padding(10.dp)) {
+                    Row(verticalAlignment=Alignment.CenterVertically) {
+                        Text(previewItem!!.name,color=fg,fontWeight=FontWeight.SemiBold,modifier=Modifier.weight(1f))
+                        Text("CLOSE",color=Accent,fontSize=10.sp,modifier=Modifier.clickable { closePreview() }.padding(8.dp))
+                    }
+                    if (previewItem!!.mimeType.startsWith("image/")) {
+                        previewBitmap?.asImageBitmap()?.let { bitmap ->
+                            Image(bitmap=bitmap,contentDescription="Private photo preview",modifier=Modifier.fillMaxWidth().heightIn(max=380.dp))
+                        }
+                    } else if (previewItem!!.mimeType.startsWith("video/")) {
+                        AndroidView(
+                            factory = { viewContext ->
+                                VideoView(viewContext).apply {
+                                    videoView = this
+                                    val controller = MediaController(viewContext)
+                                    controller.setAnchorView(this)
+                                    setMediaController(controller)
+                                    setVideoPath(previewFile!!.absolutePath)
+                                    setOnPreparedListener { it.isLooping = false }
+                                    start()
+                                }
+                            },
+                            modifier = Modifier.fillMaxWidth().height(240.dp)
+                        )
+                    }
+                    Text("The temporary decrypted preview is removed when you close or lock the gallery.",color=muted,fontSize=10.sp,modifier=Modifier.padding(top=6.dp))
+                }
             }
             Divider(color=muted.copy(alpha=.2f),modifier=Modifier.padding(vertical=10.dp))
             Text("PRIVATE NOTES",color=fg,fontWeight=FontWeight.Bold)
