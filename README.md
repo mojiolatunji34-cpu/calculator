@@ -1,38 +1,91 @@
-# calculator
-Calculator  A modern scientific 
+# Calculator — Diffy 01
 
-# Calculator
+A modern Android scientific calculator focused on mathematical accuracy, speed, accessibility, and a polished mobile experience.
 
-A modern scientific calculator project designed for Android devices.
+## Vision
+Build a dependable everyday and scientific calculator with a clear interface, a safe expression engine, useful history, and a maintainable Android codebase.
 
-## Features
-
-- Standard calculator operations
-- Scientific calculations
-- Trigonometric functions (sin, cos, tan)
-- Logarithms and natural logarithms
-- Powers, roots and percentages
-- Brackets and expression evaluation
-- Degree and radian modes
-- Calculation history
-- Modern dark and light themes
-- Responsive mobile interface
+## Features in this first implementation
+- Standard arithmetic: addition, subtraction, multiplication, division, percentages
+- Scientific operations: sine, cosine, tangent, inverse trig, logarithms, natural logarithms, square root, square, powers, factorial, absolute value
+- Constants: pi and Euler's number
+- Degree and radian angle modes
+- Parentheses and operator precedence
+- Calculation history saved locally
+- Dark and light appearance toggle
+- Responsive Jetpack Compose interface
+- Input validation and readable calculation errors
+- Offline-first operation; no account or network permission required
 
 ## Technology
+- Kotlin
+- Native Android
+- Jetpack Compose and Material 3
+- Gradle Kotlin DSL
+- JUnit for expression-engine tests
 
-- Android development
-- JavaScript / HTML / CSS where applicable
-- Android-compatible project structure
+## Project structure
+```
+app/
+  src/main/
+    AndroidManifest.xml
+    java/com/diffy01/calculator/
+      MainActivity.kt
+      CalculatorEngine.kt
+      CalculationHistory.kt
+    res/values/strings.xml
+    res/values/themes.xml
+  src/test/java/com/diffy01/calculator/
+    CalculatorEngineTest.kt
+build.gradle.kts
+settings.gradle.kts
+gradle.properties
+```
 
-## Project Status
+## Build requirements
+- Android Studio with a compatible Android SDK
+- JDK 17
+- Android Gradle Plugin 8.7.3
+- Gradle 8.9 or newer compatible Gradle distribution
 
-Under active development.
+Open the repository as a project in Android Studio and allow Gradle sync to finish. Select the app run configuration to install it on an emulator or connected Android device.
+
+## Build an APK
+From the project root, run:
+
+```bash
+gradle assembleDebug
+```
+
+The debug APK is generated at `app/build/outputs/apk/debug/app-debug.apk`.
+
+For a release, configure a private signing key in your local Gradle properties or Android Studio. Never commit signing keys, passwords, or local secrets.
+
+## Quality principles
+1. Mathematical functions must have automated tests.
+2. Invalid input must show a useful error rather than crash.
+3. The calculator must not evaluate expressions as executable code.
+4. Existing working features must be preserved when adding new ones.
+5. Test on multiple screen sizes and both portrait and landscape layouts before release.
+6. Do not claim a release is tested until the APK has actually been installed and exercised on a device or emulator.
+
+## Roadmap
+- [x] Native Android project foundation
+- [x] Standard and scientific expression engine
+- [x] DEG/RAD mode
+- [x] Local calculation history
+- [x] Dark/light appearance
+- [x] Automated expression-engine tests
+- [ ] Fraction and unit-conversion tools
+- [ ] Matrix and statistics modes
+- [ ] Graph plotting and equation-solving tools
+- [ ] Signed release build and device QA
+
+## Privacy
+Core calculations run locally. This project does not request internet access and does not transmit calculation history.
 
 ## Developer
-
-Diffy 01
+**Diffy 01**
 
 ## License
-
-MIT License
- # A modern Android scientific calculator with advanced mathematical functions, calculation history, and a responsive interface.calculator project designed for Android devices.  ## Features  - Standard calculator operations - Scientific calculations - Trigonometric functions (sin, cos, tan) - Logarithms and natural logarithms - Powers, roots and percentages - Brackets and expression evaluation - Degree and radian modes - Calculation history - Modern dark and light themes - Responsive mobile interface  ## Technology  - Android development - JavaScript / HTML / CSS where applicable - Android-compatible project structure  ## Project Status  Under active development.  ## Developer  Diffy 01  ## License  MIT License
+MIT. See [LICENSE](LICENSE).
