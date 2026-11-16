@@ -232,7 +232,7 @@ private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
                 Text("Enter square matrices. Separate columns with commas and rows with semicolons.",color=muted,fontSize=12.sp)
                 Field("Matrix A",matrixA){matrixA=it}; Field("Matrix B",matrixB){matrixB=it}
                 PrimaryAction("DETERMINANT OF A") { output=runCatching { val m=matrixA.split(";").map { row -> row.split(",").map { it.trim().toDouble() } }; "det(A) = ${AdvancedMath.format(AdvancedMath.determinant(m))}" }.getOrElse { it.message ?: "Check matrix A" } }
-                PrimaryAction("MULTIPLY A × B") { output=runCatching { fun parse(s:String)=s.split(";").map { row -> row.split(",").map { it.trim().toDouble() } }; AdvancedMath.multiply(parse(matrixA),parse(matrixB)).joinToString("\n") { row -> row.joinToString("    ") { AdvancedMath.format(it) } } }.getOrElse { it.message ?: "Check matrix dimensions" } }
+                PrimaryAction("MULTIPLY A × B") { output=runCatching { val left: List<List<Double>> = parseMatrixInput(matrixA); val right: List<List<Double>> = parseMatrixInput(matrixB); val product: List<List<Double>> = AdvancedMath.multiply(left, right); product.joinToString("\n") { row: List<Double> -> row.joinToString("    ") { value: Double -> AdvancedMath.format(value) } } }.getOrElse { failure -> failure.message ?: "Check matrix dimensions" } }
             }
             "CONVERTER" -> {
                 Text("Length, mass, volume and temperature",color=muted,fontSize=13.sp)
@@ -356,3 +356,6 @@ private fun SettingsScreen(surface:Color,fg:Color,muted:Color,dark:Boolean,onDar
         Text(text,color=fg,fontSize=14.sp,modifier=Modifier.padding(top=5.dp))
     }
 }
+
+
+private fun parseMatrixInput(input: String): List<List<Double>> = input.split(";").map { row -> row.split(",").map { cell -> cell.trim().toDouble() } }
