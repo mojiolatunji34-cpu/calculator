@@ -41,6 +41,15 @@ class SecureVault(context: Context) {
         return java.security.MessageDigest.isEqual(expected, actual)
     }
 
+    fun changePin(currentPin: CharArray, newPin: CharArray) {
+        require(verifyPin(currentPin)) { "Current PIN is incorrect" }
+        require(newPin.size in 6..12 && newPin.all { it.isDigit() }) { "New PIN must contain 6–12 digits" }
+        val salt = ByteArray(16).also(random::nextBytes)
+        val hash = pinHash(newPin, salt)
+        prefs.edit().putString("pin_salt", b64(salt)).putString("pin_hash", b64(hash)).apply()
+        newPin.fill('\u0000')
+    }
+
     fun readEntries(): List<VaultEntry> {
         val cipherText = prefs.getString("payload", null) ?: return emptyList()
         val iv = prefs.getString("iv", null)?.let(::unb64) ?: return emptyList()
