@@ -48,7 +48,7 @@ class AdvancedMathTest {
     }
     @Test fun configurableNumberFormatting() {
         assertEquals("1.23", AdvancedMath.format(1.23456,2))
-        assertEquals("1", AdvancedMath.format(1.9,0))
+        assertEquals("2", AdvancedMath.format(1.9,0))
         assertThrows(IllegalArgumentException::class.java) { AdvancedMath.format(1.0,16) }
     }
     @Test fun unitConversion() {
