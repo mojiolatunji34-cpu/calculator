@@ -572,3 +572,24 @@ The PIN-protected vault now includes an encrypted private-file area in addition 
 - The existing vault PIN gate and automatic lock continue to protect access through the app interface.
 
 **Important limitations:** importing creates an encrypted copy; it does not automatically remove the original from Photos, Gallery, Downloads or another app. The current version lists and stores encrypted files but does not yet provide an in-vault photo viewer or video player, nor an export/decrypt workflow. Android Keystore encryption protects data at rest, but this feature has not yet completed independent security review or physical-device testing. Keep the recovery code safe and do not treat this as a substitute for a professionally audited secure-storage product.
+
+
+---
+
+## Version 1.4.0 — hidden private gallery
+
+The app includes a private gallery that is opened from the normal calculator screen:
+
+- Set a personal **4- or 6-digit access code** in Settings. No default code is supplied.
+- Type that exact code into the calculator and press **=** to open the private gallery.
+- The normal calculator continues to calculate expressions that are not the saved access code.
+- There is no permanent Vault tab on the calculator navigation.
+- Import photos, videos, PDFs and other supported files through Android's document picker.
+- Imported files are encrypted as copies in the app's private internal storage using AES-GCM and an Android Keystore key.
+- Supported image and video files can be previewed inside the gallery. Temporary decrypted preview files are deleted when the preview is closed, the gallery locks, or the app starts again.
+- The gallery locks after five minutes and when the app is sent to the background. Screen capture is blocked while the gallery screen is active.
+- The access code can be changed in Settings. A recovery code is generated when the access code is created or changed; save it somewhere safe.
+
+**Important file behavior:** importing creates an encrypted copy inside the app. It does not move or delete the original file from Photos, Gallery, Downloads, or another app. The original remains where it was until the device owner deletes it separately.
+
+The private gallery and temporary preview behavior should still be tested on a physical Android device with representative image and video formats before a public release. The debug CI build is not a substitute for device-level security testing.
