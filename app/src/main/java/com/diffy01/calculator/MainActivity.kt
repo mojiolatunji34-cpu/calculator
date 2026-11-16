@@ -119,99 +119,68 @@ private fun CalculatorScreen(
     history:List<HistoryItem>, setHistory:(List<HistoryItem>)->Unit, memory:Double, setMemory:(Double)->Unit,
     clipboard:androidx.compose.ui.platform.ClipboardManager, context:Context, surface:Color, fg:Color, muted:Color
 ) {
-    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Column(Modifier.fillMaxWidth().background(surface,RoundedCornerShape(24.dp)).padding(18.dp), horizontalAlignment=Alignment.End) {
-            Row(verticalAlignment=Alignment.CenterVertically) {
-                Text(if(scientific) "SCIENTIFIC MODE" else "STANDARD MODE", color=muted, fontSize=10.sp, letterSpacing=1.5.sp, modifier=Modifier.weight(1f))
-                Text(if(scientific) "STANDARD" else "SCIENTIFIC", color=Accent, fontSize=11.sp, fontWeight=FontWeight.Bold, modifier=Modifier.clickable { setScientific(!scientific) }.padding(6.dp))
-            }
-            Text(expression.ifEmpty{"0"}, color=fg, fontSize=28.sp, textAlign=TextAlign.End, maxLines=3, modifier=Modifier.fillMaxWidth().padding(top=22.dp))
-            Text(error.ifEmpty{answer}, color=if(error.isNotEmpty()) Color(0xFFFF6B75) else Accent, fontSize=35.sp, fontWeight=FontWeight.Bold, textAlign=TextAlign.End, maxLines=2, modifier=Modifier.fillMaxWidth().padding(top=8.dp))
-            Row(Modifier.fillMaxWidth(), horizontalArrangement=Arrangement.End) {
-                SmallAction("COPY") { clipboard.setText(AnnotatedString(answer)) }
-                SmallAction("SHARE") { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT,"$expression = $answer"),"Share result")) }
-                SmallAction("a/b") { runCatching { setAnswer(Fraction.fromDecimal(answer.toDouble()).toString()) }.onFailure { setError("Cannot convert this result to a fraction") } }
-            }
+    Column(Modifier.fillMaxSize().padding(horizontal=2.dp), verticalArrangement=Arrangement.spacedBy(5.dp)) {
+        Column(Modifier.fillMaxWidth().weight(1f).padding(horizontal=8.dp),verticalArrangement=Arrangement.Bottom,horizontalAlignment=Alignment.End) {
+            if(expression.isNotEmpty()) Text(expression,color=muted,fontSize=25.sp,textAlign=TextAlign.End,maxLines=2,modifier=Modifier.fillMaxWidth())
+            Text(if(error.isNotEmpty()) error else if(expression.isEmpty()) "0" else answer,color=if(error.isNotEmpty()) Color(0xFFFF737D) else Color(0xFFAFCBF4),fontSize=if(answer.length>12) 34.sp else 48.sp,textAlign=TextAlign.End,maxLines=2,modifier=Modifier.fillMaxWidth().padding(top=8.dp))
         }
-        if(steps.isNotEmpty()) {
-            Column(Modifier.fillMaxWidth().padding(top=8.dp).background(surface,RoundedCornerShape(16.dp)).padding(12.dp)) {
-                Text("STEP-BY-STEP WORKING",color=Accent,fontSize=10.sp,fontWeight=FontWeight.Bold)
-                steps.forEachIndexed { index, step ->
-                    Text("${index+1}. $step",color=muted,fontSize=12.sp,modifier=Modifier.padding(top=5.dp))
-                }
-            }
+        if(steps.isNotEmpty()) Column(Modifier.fillMaxWidth().background(surface,RoundedCornerShape(12.dp)).padding(8.dp)) {
+            Text("WORKING",color=Accent,fontSize=9.sp,fontWeight=FontWeight.Bold)
+            steps.take(3).forEach { Text(it,color=muted,fontSize=10.sp) }
         }
-        Spacer(Modifier.height(9.dp))
-        Row(Modifier.fillMaxWidth(), horizontalArrangement=Arrangement.spacedBy(7.dp)) {
-            listOf("MC","MR","M+","M-").forEach { key -> Key(key, Modifier.weight(1f), surface, fg, true) {
-                when(key) {
-                    "MC" -> setMemory(0.0)
-                    "MR" -> setExpression(expression + AdvancedMath.format(memory))
-                    "M+" -> setMemory(memory + (answer.toDoubleOrNull() ?: 0.0))
-                    "M-" -> setMemory(memory - (answer.toDoubleOrNull() ?: 0.0))
-                }
-            } }
+        Row(Modifier.fillMaxWidth().padding(horizontal=6.dp,vertical=4.dp),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
+            SmallAction("◷") { if(history.isNotEmpty()) { setExpression(history.first().expression);setAnswer(history.first().result);setError("");setSteps(emptyList()) } }
+            SmallAction("▤") { clipboard.setText(AnnotatedString(history.take(10).joinToString("\n") { "${it.expression} = ${it.result}" })) }
+            SmallAction("√π") { setScientific(!scientific) }
+            SmallAction("⌫") { if(expression.isNotEmpty()) { setExpression(expression.dropLast(1));setError("") } }
         }
+        Divider(color=muted.copy(alpha=.35f),thickness=1.dp)
         if(scientific) {
-            val scienceRows = listOf(
-                listOf("sin(","cos(","tan(","ln(","log("),
-                listOf("asin(","acos(","atan(","sqrt(","cbrt("),
-                listOf("sinh(","cosh(","tanh(","abs(","exp("),
-                listOf("EXP","π","e","^","!"),
-                listOf("ceil(","("," ) ","%","⌫")
-            )
-            scienceRows.forEach { row -> KeyRow(row, surface, fg, muted) { key ->
-                when(key.trim()) {
-                    "π" -> setExpression(expression+"pi")
-                    "EXP" -> setExpression(expression+"e")
-                    "e" -> setExpression(expression+"e")
-                    "⌫" -> setExpression(expression.dropLast(1))
-                    else -> setExpression(expression+key.trim())
+            val scienceRows=listOf(listOf("⇄",if(degree) "Deg" else "Rad","√","|x|"),listOf("sin","cos","tan","π"),listOf("ln","log","1/x","e"),listOf("eˣ","x²","xʸ",""))
+            scienceRows.forEach { row -> Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+                row.forEach { key ->
+                    if(key.isEmpty()) Spacer(Modifier.weight(1f))
+                    else Key(key,Modifier.weight(1f),surface,fg,false,compact=true) {
+                        when(key) {
+                            "⇄" -> setExpression(expression+"pi")
+                            "Deg","Rad" -> Unit
+                            "√" -> setExpression(expression+"sqrt(")
+                            "|x|" -> setExpression(expression+"abs(")
+                            "sin","cos","tan","ln","log" -> setExpression(expression+key+"(")
+                            "π" -> setExpression(expression+"pi")
+                            "e" -> setExpression(expression+"e")
+                            "1/x" -> setExpression("1/("+expression+")")
+                            "eˣ" -> setExpression(expression+"exp(")
+                            "x²" -> setExpression(expression+"^2")
+                            "xʸ" -> setExpression(expression+"^")
+                        }
+                        setError("")
+                    }
                 }
             } }
         }
-        val rows = listOf(listOf("AC","(",")","÷"),listOf("7","8","9","×"),listOf("4","5","6","−"),listOf("1","2","3","+"),listOf("%","0",".","="))
-        rows.forEach { row ->
-            Row(Modifier.fillMaxWidth(), horizontalArrangement=Arrangement.spacedBy(8.dp)) {
-                row.forEach { key -> Key(key, Modifier.weight(1f), surface, fg, key in listOf("AC","=","÷","×","−","+")) {
-                    when(key) {
-                        "AC" -> { setExpression(""); setAnswer("0"); setError(""); setSteps(emptyList()) }
-                        "⌫" -> setExpression(expression.dropLast(1))
-                        "=" -> runCatching { CalculatorEngine.evaluateWithSteps(expression,degree) }.onSuccess { calculation ->
-                            val formatted=AdvancedMath.format(calculation.value)
-                            setAnswer(formatted); setError(""); setSteps(calculation.steps)
-                            setHistory(listOf(HistoryItem(expression,formatted))+history)
-                        }.onFailure { setError(it.message ?: "Check your expression"); setSteps(emptyList()) }
-                        else -> setExpression(expression + when(key){"×"->"*";"÷"->"/";"−"->"-";else->key})
-                    }
-                    if(key!="=" && key!="AC") setError("")
-                } }
-            }
-        }
-        Text("Offline • Calculation history saved on this device", color=muted, fontSize=10.sp, modifier=Modifier.align(Alignment.CenterHorizontally).padding(12.dp))
-        Text("RECENT", color=muted, fontSize=10.sp, fontWeight=FontWeight.Bold, letterSpacing=1.5.sp)
-        history.take(4).forEach { item ->
-            Row(Modifier.fillMaxWidth().clickable { setExpression(item.expression); setAnswer(item.result); setError(""); setSteps(emptyList()) }.padding(vertical=7.dp), verticalAlignment=Alignment.CenterVertically) {
-                Column(Modifier.weight(1f)) { Text(item.expression,color=muted,fontSize=12.sp); Text(item.result,color=fg,fontSize=16.sp,fontWeight=FontWeight.SemiBold) }
-                Text("USE",color=Accent,fontSize=10.sp)
-            }
+        val rows=listOf(listOf("C","()","%","÷"),listOf("7","8","9","×"),listOf("4","5","6","−"),listOf("1","2","3","+"),listOf("+/−","0",".","="))
+        rows.forEach { row -> Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+            row.forEach { key -> Key(key,Modifier.weight(1f),surface,fg,key in listOf("C","=","÷","×","−","+"),compact=false) {
+                when(key) {
+                    "C" -> { setExpression("");setAnswer("0");setError("");setSteps(emptyList()) }
+                    "()" -> setExpression(expression+if(expression.count{it=='('}>expression.count{it==')'}) ")" else "(")
+                    "%" -> setExpression(expression+"%")
+                    "+/−" -> setExpression(if(expression.startsWith("-")) expression.drop(1) else "-("+expression+")")
+                    "=" -> runCatching { CalculatorEngine.evaluateWithSteps(expression,degree) }.onSuccess { calculation ->
+                        val formatted=AdvancedMath.format(calculation.value);setAnswer(formatted);setError("");setSteps(calculation.steps);setHistory(listOf(HistoryItem(expression,formatted))+history)
+                    }.onFailure { setError(it.message ?: "Check your expression");setSteps(emptyList()) }
+                    else -> setExpression(expression+when(key){"×"->"*";"÷"->"/";"−"->"-";else->key})
+                }
+                if(key!="=" && key!="C") setError("")
+            } }
+        } }
+        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
+            SmallAction("COPY") { clipboard.setText(AnnotatedString(answer)) }
+            SmallAction("SHARE") { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT,"$expression = $answer"),"Share result")) }
+            SmallAction("a/b") { runCatching { setAnswer(Fraction.fromDecimal(answer.toDouble()).toString()) }.onFailure { setError("Cannot convert result to fraction") } }
         }
     }
-}
-
-@Composable private fun KeyRow(keys:List<String>, surface:Color, fg:Color, muted:Color, onKey:(String)->Unit) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-        keys.forEach { key -> Key(key.trim(),Modifier.weight(1f),surface,fg,false,onClick={onKey(key)}) }
-    }
-}
-@Composable private fun Key(label:String, modifier:Modifier, surface:Color, fg:Color, action:Boolean, onClick:()->Unit) {
-    val bg=if(label=="=" || label=="AC") Accent else surface
-    Surface(modifier.padding(vertical=3.dp).height(48.dp).semantics { contentDescription = "$label key"; role = Role.Button }.clickable { onClick() }, color=bg, shape=RoundedCornerShape(14.dp), tonalElevation=if(action) 2.dp else 0.dp) {
-        Box(contentAlignment=Alignment.Center) { Text(label,color=if(label=="="||label=="AC") Color.White else if(action) Accent else fg,fontSize=if(label.length>5) 11.sp else 17.sp,fontWeight=FontWeight.SemiBold) }
-    }
-}
-@Composable private fun SmallAction(label:String,onClick:()->Unit) {
-    Text(label,color=Accent,fontSize=10.sp,fontWeight=FontWeight.Bold,modifier=Modifier.clickable { onClick() }.padding(start=14.dp,top=12.dp))
 }
 
 @Composable
