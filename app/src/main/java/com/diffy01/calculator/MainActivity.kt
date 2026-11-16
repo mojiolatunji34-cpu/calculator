@@ -259,7 +259,7 @@ private fun GraphScreen(surface:Color,fg:Color,muted:Color,degree:Boolean) {
             val path=Path(); var started=false
             for(i in 0..300) {
                 val x=-limit+2*limit*i/300
-                val y=runCatching { CalculatorEngine.evaluate(function.replace("x","($x)"),degree).toFloat() }.getOrNull()
+                val y=runCatching { CalculatorEngine.evaluate(function.replace(Regex("\\bx\\b"),"($x)"),degree).toFloat() }.getOrNull()
                 if(y!=null && y.isFinite() && abs(y)<limit*10) {
                     val px=i/300f*w; val py=h/2-y/(2*limit)*h
                     if(!started){path.moveTo(px,py);started=true}else path.lineTo(px,py)
