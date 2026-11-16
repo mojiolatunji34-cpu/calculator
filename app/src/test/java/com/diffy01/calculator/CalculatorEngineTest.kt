@@ -26,6 +26,13 @@ class CalculatorEngineTest {
         close(1.0, CalculatorEngine.evaluate("sin(1.5707963267948966)", false))
     }
 
+    @Test fun stepByStepEvaluationRecordsOperationOrder() {
+        val result=CalculatorEngine.evaluateWithSteps("2+3*4")
+        close(14.0,result.value)
+        assertEquals(true,result.steps.any { it.contains("3 × 4 = 12") })
+        assertEquals(true,result.steps.any { it.contains("2 + 12 = 14") })
+    }
+
     @Test fun scientificNotationAndComplexArithmetic() {
         close(1500.0, CalculatorEngine.evaluate("1.5e3"))
         close(0.002, CalculatorEngine.evaluate("2E-3"))
