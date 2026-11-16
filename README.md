@@ -556,3 +556,19 @@ The vault is an encrypted private-notes feature, not a complete password manager
 **Build it correctly. Test it properly. Improve it carefully.**
 
 **Calculator — DIFFY 01. More than basic mathematics.**
+
+
+---
+
+## Version 1.3.0 — Secure private media vault
+
+The PIN-protected vault now includes an encrypted private-file area in addition to encrypted text notes.
+
+- Import photos, videos, PDFs, text documents and other files through Android's system document picker.
+- Selected files are copied into the app's private internal storage and encrypted with AES-GCM using a key held by Android Keystore.
+- The file catalogue (names, MIME types and sizes) is encrypted as well.
+- List encrypted files and delete individual entries from the vault.
+- The file picker grants access only to the selected file; broad photo/video storage permissions are not requested.
+- The existing vault PIN gate and automatic lock continue to protect access through the app interface.
+
+**Important limitations:** importing creates an encrypted copy; it does not automatically remove the original from Photos, Gallery, Downloads or another app. The current version lists and stores encrypted files but does not yet provide an in-vault photo viewer or video player, nor an export/decrypt workflow. Android Keystore encryption protects data at rest, but this feature has not yet completed independent security review or physical-device testing. Keep the recovery code safe and do not treat this as a substitute for a professionally audited secure-storage product.
