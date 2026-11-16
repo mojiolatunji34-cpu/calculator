@@ -3,6 +3,7 @@ package com.diffy01.calculator
 import android.content.Context
 import android.content.Intent
 import android.os.Bundle
+import android.view.WindowManager
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
@@ -49,6 +50,9 @@ import kotlinx.coroutines.delay
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        window.statusBarColor = android.graphics.Color.BLACK
+        window.navigationBarColor = android.graphics.Color.BLACK
+        window.decorView.systemUiVisibility = 0
         val history = CalculationHistory(this)
         val vault = SecureVault(this)
         val prefs = getSharedPreferences("calculator_settings", Context.MODE_PRIVATE)
@@ -68,7 +72,7 @@ private fun CalculatorApp(store: CalculationHistory, vault: SecureVault, prefs: 
     var error by remember { mutableStateOf("") }
     var degree by remember { mutableStateOf(prefs.getBoolean("degrees", true)) }
     var dark by remember { mutableStateOf(prefs.getBoolean("dark", true)) }
-    var scientific by remember { mutableStateOf(true) }
+    var scientific by remember { mutableStateOf(false) }
     var tab by remember { mutableStateOf("CALC") }
     var history by remember { mutableStateOf(store.load()) }
     var memory by remember { mutableDoubleStateOf(0.0) }
@@ -82,34 +86,44 @@ private fun CalculatorApp(store: CalculationHistory, vault: SecureVault, prefs: 
         else lightColorScheme(primary=Accent, background=bg, surface=surface, onBackground=fg, onSurface=fg)
 
     MaterialTheme(colorScheme=scheme) {
-        Surface(Modifier.fillMaxSize(), color=bg) {
-            Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal=14.dp)) {
-                Row(Modifier.fillMaxWidth().padding(vertical=12.dp), verticalAlignment=Alignment.CenterVertically) {
-                    Column(Modifier.weight(1f)) {
-                        Text("DIFFY 01", color=Accent, fontSize=11.sp, fontWeight=FontWeight.ExtraBold, letterSpacing=2.sp)
-                        Text("Scientific Suite", color=fg, fontSize=23.sp, fontWeight=FontWeight.Bold)
+
+        Surface(Modifier.fillMaxSize(), color=Color.Black) {
+            if(tab=="CALC") {
+                CalculatorScreen(
+                    expression, { expression=it; error=""; calculationSteps=emptyList() },
+                    answer, { answer=it }, error, { error=it },
+                    calculationSteps, { calculationSteps=it }, degree, scientific, { scientific=it },
+                    history, { history=it; store.save(it) }, memory, { memory=it },
+                    clipboard, context, Color(0xFF101418), Color(0xFFAFCBF4), Color(0xFF9AA8C4),
+                    onOpenTools={ tab="TOOLS" }
+                )
+            } else {
+                Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal=14.dp)) {
+                    Row(Modifier.fillMaxWidth().padding(vertical=12.dp),verticalAlignment=Alignment.CenterVertically) {
+                        Text("‹",color=fg,fontSize=28.sp,modifier=Modifier.clickable { tab="CALC" }.padding(end=12.dp))
+                        Column(Modifier.weight(1f)) {
+                            Text("DIFFY 01",color=Accent,fontSize=11.sp,fontWeight=FontWeight.ExtraBold,letterSpacing=2.sp)
+                            Text("Scientific Suite",color=fg,fontSize=23.sp,fontWeight=FontWeight.Bold)
+                        }
+                        Text(if(degree) "DEG" else "RAD",color=fg,modifier=Modifier.background(surface,RoundedCornerShape(12.dp)).clickable { degree=!degree; prefs.edit().putBoolean("degrees",degree).apply() }.padding(12.dp))
                     }
-                    Text(if(degree) "DEG" else "RAD", color=fg, modifier=Modifier.background(surface, RoundedCornerShape(12.dp)).clickable { degree=!degree; prefs.edit().putBoolean("degrees",degree).apply() }.padding(12.dp))
-                }
-                Row(Modifier.fillMaxWidth().padding(bottom=10.dp), horizontalArrangement=Arrangement.spacedBy(6.dp)) {
-                    listOf("CALC","TOOLS","GRAPH","VAULT","SETTINGS").forEach { item ->
-                        val selected = tab == item
-                        val tint by animateColorAsState(if(selected) Accent else surface, label="tab")
-                        Surface(Modifier.weight(1f).clickable { tab=item }, color=tint, shape=RoundedCornerShape(12.dp)) {
-                            Text(item, color=if(selected) Color.White else muted, fontSize=9.sp, fontWeight=FontWeight.Bold, textAlign=TextAlign.Center, modifier=Modifier.padding(vertical=12.dp))
+                    Row(Modifier.fillMaxWidth().padding(bottom=10.dp),horizontalArrangement=Arrangement.spacedBy(6.dp)) {
+                        listOf("TOOLS","GRAPH","VAULT","SETTINGS").forEach { item ->
+                            val selected=tab==item
+                            Surface(Modifier.weight(1f).clickable { tab=item },color=if(selected) Accent else surface,shape=RoundedCornerShape(12.dp)) {
+                                Text(item,color=if(selected) Color.White else muted,fontSize=9.sp,fontWeight=FontWeight.Bold,textAlign=TextAlign.Center,modifier=Modifier.padding(vertical=12.dp))
+                            }
                         }
                     }
-                }
-                when(tab) {
-                    "CALC" -> CalculatorScreen(expression, { expression=it; error=""; calculationSteps=emptyList() }, answer, { answer=it }, error, { error=it }, calculationSteps, { calculationSteps=it }, degree, scientific, { scientific=it }, history, { history=it; store.save(it) }, memory, { memory=it }, clipboard, context, surface, fg, muted)
-                    "TOOLS" -> ToolsScreen(surface, fg, muted)
-                    "GRAPH" -> GraphScreen(surface, fg, muted, degree)
-                    "VAULT" -> VaultScreen(vault, surface, fg, muted)
-                    "SETTINGS" -> SettingsScreen(surface, fg, muted, dark, { dark=it; prefs.edit().putBoolean("dark",it).apply() }, degree, { degree=it; prefs.edit().putBoolean("degrees",it).apply() }, { history=emptyList(); store.clear() })
+                    when(tab) {
+                        "TOOLS" -> ToolsScreen(surface,fg,muted)
+                        "GRAPH" -> GraphScreen(surface,fg,muted,degree)
+                        "VAULT" -> VaultScreen(vault,surface,fg,muted)
+                        "SETTINGS" -> SettingsScreen(surface,fg,muted,dark,{dark=it;prefs.edit().putBoolean("dark",it).apply()},degree,{degree=it;prefs.edit().putBoolean("degrees",it).apply()},{history=emptyList();store.clear()})
+                    }
                 }
             }
         }
-    }
 }
 
 @Composable
@@ -117,7 +131,7 @@ private fun CalculatorScreen(
     expression:String, setExpression:(String)->Unit, answer:String, setAnswer:(String)->Unit,
     error:String, setError:(String)->Unit, steps:List<String>, setSteps:(List<String>)->Unit, degree:Boolean, scientific:Boolean, setScientific:(Boolean)->Unit,
     history:List<HistoryItem>, setHistory:(List<HistoryItem>)->Unit, memory:Double, setMemory:(Double)->Unit,
-    clipboard:androidx.compose.ui.platform.ClipboardManager, context:Context, surface:Color, fg:Color, muted:Color
+    clipboard:androidx.compose.ui.platform.ClipboardManager, context:Context, surface:Color, fg:Color, muted:Color, onOpenTools:()->Unit
 ) {
     Column(Modifier.fillMaxSize().padding(horizontal=2.dp), verticalArrangement=Arrangement.spacedBy(5.dp)) {
         Column(Modifier.fillMaxWidth().weight(1f).padding(horizontal=8.dp),verticalArrangement=Arrangement.Bottom,horizontalAlignment=Alignment.End) {
@@ -130,7 +144,7 @@ private fun CalculatorScreen(
         }
         Row(Modifier.fillMaxWidth().padding(horizontal=6.dp,vertical=4.dp),horizontalArrangement=Arrangement.SpaceBetween,verticalAlignment=Alignment.CenterVertically) {
             SmallAction("◷") { if(history.isNotEmpty()) { setExpression(history.first().expression);setAnswer(history.first().result);setError("");setSteps(emptyList()) } }
-            SmallAction("▤") { clipboard.setText(AnnotatedString(history.take(10).joinToString("\n") { "${it.expression} = ${it.result}" })) }
+            SmallAction("▥") { clipboard.setText(AnnotatedString(history.take(10).joinToString("\n") { "${it.expression} = ${it.result}" })) }
             SmallAction("√π") { setScientific(!scientific) }
             SmallAction("⌫") { if(expression.isNotEmpty()) { setExpression(expression.dropLast(1));setError("") } }
         }
