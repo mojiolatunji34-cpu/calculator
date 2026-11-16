@@ -33,7 +33,7 @@ class AdvancedMathTest {
     @Test fun richerStatisticsAndUnitGroups() {
         val stats=AdvancedMath.statistics(listOf(1.0,2.0,2.0,3.0))
         assertEquals(2.0, stats.getValue("Mode 1"), 1e-10)
-        assertEquals(1.0, stats.getValue("Sample variance"), 1e-10)
+        assertEquals(2.0/3.0, stats.getValue("Sample variance"), 1e-10)
         assertEquals(3600.0, AdvancedMath.convert(1.0,"h","s"),1e-10)
         assertEquals(100.0, AdvancedMath.convert(1.0,"bar","kPa"),1e-10)
         assertEquals(273.15, AdvancedMath.convert(32.0,"°F","K"),1e-10)
