@@ -16,6 +16,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
@@ -406,7 +407,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
             }
         }
         if(message.isNotBlank()) Text(message,color=Accent,fontSize=12.sp,modifier=Modifier.padding(8.dp))
-        if(recoveryCodeToSave.isNotBlank()) Text("RECOVERY CODE — SAVE THIS: $recoveryCodeToSave",color=fg,fontWeight=FontWeight.Bold,fontSize=14.sp,modifier=Modifier.fillMaxWidth().background(surface,RoundedCornerShape(12.dp)).padding(12.dp))
+        if(recoveryCodeToSave.isNotBlank()) SelectionContainer { Text("RECOVERY CODE — SAVE THIS: $recoveryCodeToSave",color=fg,fontWeight=FontWeight.Bold,fontSize=14.sp,modifier=Modifier.fillMaxWidth().background(surface,RoundedCornerShape(12.dp)).padding(12.dp)) }
     }
 }
 
