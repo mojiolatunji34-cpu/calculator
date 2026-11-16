@@ -26,7 +26,7 @@ class AdvancedMathTest {
         val matrix = listOf(listOf(1.0,2.0),listOf(3.0,4.0))
         val inverse = AdvancedMath.inverse(matrix)
         assertEquals(-2.0, inverse[0][0], 1e-10)
-        assertEquals(1.0, AdvancedMath.trace(matrix), 1e-10)
+        assertEquals(5.0, AdvancedMath.trace(matrix), 1e-10)
         assertEquals(2, AdvancedMath.rank(matrix))
         assertEquals(listOf(listOf(1.0,3.0),listOf(2.0,4.0)), AdvancedMath.transpose(matrix))
         val eigen = AdvancedMath.symmetricEigenvalues(listOf(listOf(2.0,1.0),listOf(1.0,2.0)))
