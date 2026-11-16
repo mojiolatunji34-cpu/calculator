@@ -526,7 +526,7 @@ The current source includes the following implemented capabilities. Items in thi
 - Descriptive statistics including mean, median, quartiles, range, mode, population/sample variance and standard deviation.
 - Permutations and combinations.
 - Complex-number addition, subtraction, multiplication, division, conjugate and magnitude.
-- Unit conversions for length, mass, volume, temperature, time, pressure and energy.
+- Unit conversions for length, mass, volume, temperature, time, pressure and energy, with configurable decimal display precision.
 - Date difference and elapsed-time calculations.
 - Scientific constants reference.
 
