@@ -218,7 +218,7 @@ private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
     var a by remember { mutableStateOf("1") }; var b by remember { mutableStateOf("5") }; var c by remember { mutableStateOf("6") }
     var values by remember { mutableStateOf("4, 7, 7, 2, 9") }
     var n by remember { mutableStateOf("5") }; var r by remember { mutableStateOf("2") }
-    var amount by remember { mutableStateOf("1") }; var from by remember { mutableStateOf("km") }; var to by remember { mutableStateOf("m") }
+    var amount by remember { mutableStateOf("1") }; var from by remember { mutableStateOf("km") }; var to by remember { mutableStateOf("m") }; var precision by remember { mutableStateOf("6") }
     var dateA by remember { mutableStateOf("2026-01-01") }; var dateB by remember { mutableStateOf("2026-12-31") }
     var startTime by remember { mutableStateOf("09:00") }; var endTime by remember { mutableStateOf("17:30") }
     var z1r by remember { mutableStateOf("3") }; var z1i by remember { mutableStateOf("2") }
@@ -273,8 +273,8 @@ private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
             }
             "CONVERTER" -> {
                 Text("Length, mass, volume, temperature, time, pressure and energy",color=muted,fontSize=13.sp)
-                Field("Value",amount){amount=it}; Field("From unit (km, m, cm, mm, mi, ft, in, kg, g, lb, oz, L, mL, °C, °F, K)",from){from=it}; Field("To unit",to){to=it}
-                PrimaryAction("CONVERT") { output=runCatching { AdvancedMath.format(AdvancedMath.convert(amount.toDouble(),from.trim(),to.trim()))+" "+to }.getOrElse { it.message ?: "Invalid conversion" } }
+                Field("Value",amount){amount=it}; Field("From unit (km, m, cm, mm, mi, ft, in, kg, g, lb, oz, L, mL, °C, °F, K)",from){from=it}; Field("To unit",to){to=it}; Field("Decimal places (0-15)",precision){precision=it}
+                PrimaryAction("CONVERT") { output=runCatching { AdvancedMath.format(AdvancedMath.convert(amount.toDouble(),from.trim(),to.trim()),precision.toInt())+" "+to }.getOrElse { it.message ?: "Invalid conversion" } }
             }
             "DATE" -> {
                 Text("Dates use YYYY-MM-DD format",color=muted,fontSize=13.sp); Field("Start date",dateA){dateA=it}; Field("End date",dateB){dateB=it}
