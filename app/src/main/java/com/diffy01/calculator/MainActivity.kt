@@ -54,6 +54,7 @@ private val Day = Color(0xFFF3F5FB)
 private fun CalculatorApp(store: CalculationHistory, vault: SecureVault, prefs: android.content.SharedPreferences) {
     var expression by remember { mutableStateOf("") }
     var answer by remember { mutableStateOf("0") }
+    var calculationSteps by remember { mutableStateOf(emptyList<String>()) }
     var error by remember { mutableStateOf("") }
     var degree by remember { mutableStateOf(prefs.getBoolean("degrees", true)) }
     var dark by remember { mutableStateOf(prefs.getBoolean("dark", true)) }
@@ -90,7 +91,7 @@ private fun CalculatorApp(store: CalculationHistory, vault: SecureVault, prefs: 
                     }
                 }
                 when(tab) {
-                    "CALC" -> CalculatorScreen(expression, { expression=it; error="" }, answer, { answer=it }, error, { error=it }, degree, scientific, { scientific=it }, history, { history=it; store.save(it) }, memory, { memory=it }, clipboard, context, surface, fg, muted)
+                    "CALC" -> CalculatorScreen(expression, { expression=it; error=""; calculationSteps=emptyList() }, answer, { answer=it }, error, { error=it }, calculationSteps, { calculationSteps=it }, degree, scientific, { scientific=it }, history, { history=it; store.save(it) }, memory, { memory=it }, clipboard, context, surface, fg, muted)
                     "TOOLS" -> ToolsScreen(surface, fg, muted)
                     "GRAPH" -> GraphScreen(surface, fg, muted, degree)
                     "VAULT" -> VaultScreen(vault, surface, fg, muted)
@@ -104,7 +105,7 @@ private fun CalculatorApp(store: CalculationHistory, vault: SecureVault, prefs: 
 @Composable
 private fun CalculatorScreen(
     expression:String, setExpression:(String)->Unit, answer:String, setAnswer:(String)->Unit,
-    error:String, setError:(String)->Unit, degree:Boolean, scientific:Boolean, setScientific:(Boolean)->Unit,
+    error:String, setError:(String)->Unit, steps:List<String>, setSteps:(List<String>)->Unit, degree:Boolean, scientific:Boolean, setScientific:(Boolean)->Unit,
     history:List<HistoryItem>, setHistory:(List<HistoryItem>)->Unit, memory:Double, setMemory:(Double)->Unit,
     clipboard:androidx.compose.ui.platform.ClipboardManager, context:Context, surface:Color, fg:Color, muted:Color
 ) {
@@ -120,6 +121,14 @@ private fun CalculatorScreen(
                 SmallAction("COPY") { clipboard.setText(AnnotatedString(answer)) }
                 SmallAction("SHARE") { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT,"$expression = $answer"),"Share result")) }
                 SmallAction("a/b") { runCatching { setAnswer(Fraction.fromDecimal(answer.toDouble()).toString()) }.onFailure { setError("Cannot convert this result to a fraction") } }
+            }
+        }
+        if(steps.isNotEmpty()) {
+            Column(Modifier.fillMaxWidth().padding(top=8.dp).background(surface,RoundedCornerShape(16.dp)).padding(12.dp)) {
+                Text("STEP-BY-STEP WORKING",color=Accent,fontSize=10.sp,fontWeight=FontWeight.Bold)
+                steps.forEachIndexed { index, step ->
+                    Text("${index+1}. $step",color=muted,fontSize=12.sp,modifier=Modifier.padding(top=5.dp))
+                }
             }
         }
         Spacer(Modifier.height(9.dp))
@@ -156,13 +165,13 @@ private fun CalculatorScreen(
             Row(Modifier.fillMaxWidth(), horizontalArrangement=Arrangement.spacedBy(8.dp)) {
                 row.forEach { key -> Key(key, Modifier.weight(1f), surface, fg, key in listOf("AC","=","÷","×","−","+")) {
                     when(key) {
-                        "AC" -> { setExpression(""); setAnswer("0"); setError("") }
+                        "AC" -> { setExpression(""); setAnswer("0"); setError(""); setSteps(emptyList()) }
                         "⌫" -> setExpression(expression.dropLast(1))
-                        "=" -> runCatching { CalculatorEngine.evaluate(expression,degree) }.onSuccess { v ->
-                            val formatted=AdvancedMath.format(v)
-                            setAnswer(formatted); setError("")
+                        "=" -> runCatching { CalculatorEngine.evaluateWithSteps(expression,degree) }.onSuccess { calculation ->
+                            val formatted=AdvancedMath.format(calculation.value)
+                            setAnswer(formatted); setError(""); setSteps(calculation.steps)
                             setHistory(listOf(HistoryItem(expression,formatted))+history)
-                        }.onFailure { setError(it.message ?: "Check your expression") }
+                        }.onFailure { setError(it.message ?: "Check your expression"); setSteps(emptyList()) }
                         else -> setExpression(expression + when(key){"×"->"*";"÷"->"/";"−"->"-";else->key})
                     }
                     if(key!="=" && key!="AC") setError("")
@@ -172,7 +181,7 @@ private fun CalculatorScreen(
         Text("Offline • Calculation history saved on this device", color=muted, fontSize=10.sp, modifier=Modifier.align(Alignment.CenterHorizontally).padding(12.dp))
         Text("RECENT", color=muted, fontSize=10.sp, fontWeight=FontWeight.Bold, letterSpacing=1.5.sp)
         history.take(4).forEach { item ->
-            Row(Modifier.fillMaxWidth().clickable { setExpression(item.expression); setAnswer(item.result); setError("") }.padding(vertical=7.dp), verticalAlignment=Alignment.CenterVertically) {
+            Row(Modifier.fillMaxWidth().clickable { setExpression(item.expression); setAnswer(item.result); setError(""); setSteps(emptyList()) }.padding(vertical=7.dp), verticalAlignment=Alignment.CenterVertically) {
                 Column(Modifier.weight(1f)) { Text(item.expression,color=muted,fontSize=12.sp); Text(item.result,color=fg,fontSize=16.sp,fontWeight=FontWeight.SemiBold) }
                 Text("USE",color=Accent,fontSize=10.sp)
             }
