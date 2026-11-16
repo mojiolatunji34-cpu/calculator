@@ -26,6 +26,10 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalClipboardManager
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.AnnotatedString
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -196,7 +200,7 @@ private fun CalculatorScreen(
 }
 @Composable private fun Key(label:String, modifier:Modifier, surface:Color, fg:Color, action:Boolean, onClick:()->Unit) {
     val bg=if(label=="=" || label=="AC") Accent else surface
-    Surface(modifier.padding(vertical=3.dp).height(48.dp).clickable { onClick() }, color=bg, shape=RoundedCornerShape(14.dp), tonalElevation=if(action) 2.dp else 0.dp) {
+    Surface(modifier.padding(vertical=3.dp).height(48.dp).semantics { contentDescription = "$label key"; role = Role.Button }.clickable { onClick() }, color=bg, shape=RoundedCornerShape(14.dp), tonalElevation=if(action) 2.dp else 0.dp) {
         Box(contentAlignment=Alignment.Center) { Text(label,color=if(label=="="||label=="AC") Color.White else if(action) Accent else fg,fontSize=if(label.length>5) 11.sp else 17.sp,fontWeight=FontWeight.SemiBold) }
     }
 }
