@@ -1,5 +1,6 @@
 package com.diffy01.calculator
 
+import android.app.Activity
 import android.content.Context
 import android.content.Intent
 import android.graphics.BitmapFactory
@@ -386,7 +387,14 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
         previewBitmap = null
         previewItem = null
     }
-    DisposableEffect(Unit) { onDispose { closePreview() } }
+    val hostActivity = context as? Activity
+    DisposableEffect(hostActivity) {
+        hostActivity?.window?.setFlags(WindowManager.LayoutParams.FLAG_SECURE, WindowManager.LayoutParams.FLAG_SECURE)
+        onDispose {
+            hostActivity?.window?.clearFlags(WindowManager.LayoutParams.FLAG_SECURE)
+            closePreview()
+        }
+    }
     var message by remember { mutableStateOf("") }
     var pin by remember { mutableStateOf("") }; var unlocked by remember { mutableStateOf(initiallyUnlocked) }
     val mediaPicker = rememberLauncherForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
@@ -416,15 +424,15 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
             mediaItems = emptyList()
             closePreview()
             title = ""; secret = ""; currentPin = ""; newPin = ""; recoveryInput = ""; recoveryNewPin = ""; recoveryCodeToSave = ""
-            message = "Vault locked automatically after five minutes."
+            message = "Private gallery locked automatically after five minutes."
         }
     }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
-        Text("PRIVATE VAULT",color=fg,fontSize=19.sp,fontWeight=FontWeight.Bold)
+        Text("PRIVATE GALLERY",color=fg,fontSize=19.sp,fontWeight=FontWeight.Bold)
         Text("Encrypted on this device. Use a PIN you do not use elsewhere. This is a simple private notes vault, not a replacement for a dedicated password manager.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=10.dp))
         if(!unlocked) {
-            PinField(if(configured) "Enter your vault PIN" else "Create a 6–12 digit PIN",pin){pin=it.filter(Char::isDigit).take(12)}
-            PrimaryAction(if(configured) "UNLOCK VAULT" else "CREATE PRIVATE VAULT") {
+            PinField(if(configured) "Enter your private access code" else "Create a 6–12 digit PIN",pin){pin=it.filter(Char::isDigit).take(12)}
+            PrimaryAction(if(configured) "UNLOCK PRIVATE GALLERY" else "CREATE PRIVATE GALLERY") {
                 runCatching {
                     if(!configured) { recoveryCodeToSave=vault.setPin(pin.toCharArray()); configured=true; unlocked=true; message="Vault created. Write down the one-time recovery code shown below and keep it somewhere safe." }
                     else if(vault.verifyPin(pin.toCharArray())) { entries=vault.readEntries(); mediaItems=mediaVault.listItems(); unlocked=true; message="Vault unlocked." }
