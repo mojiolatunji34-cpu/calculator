@@ -222,10 +222,13 @@ object AdvancedMath {
         require(groups[from] == groups[to]) { "Those units are not compatible" }
         return value * units.getValue(from) / units.getValue(to)
     }
-    fun format(x: Double): String {
+    fun format(x: Double, maxDecimals: Int = 10): String {
+        require(maxDecimals in 0..15) { "Decimal places must be between 0 and 15" }
         if (!x.isFinite()) return "Undefined"
         val value = if (abs(x) < 1e-12) 0.0 else x
-        val pattern = if (abs(value) >= 1e12 || (value != 0.0 && abs(value) < 1e-8)) "0.##########E0" else "0.##########"
+        val fractionPattern = if (maxDecimals == 0) "" else "." + "#".repeat(maxDecimals)
+        val pattern = if (abs(value) >= 1e12 || (value != 0.0 && abs(value) < 1e-8))
+            "0$fractionPattern" + "E0" else "0$fractionPattern"
         return DecimalFormat(pattern, DecimalFormatSymbols(Locale.US)).format(value)
     }
 }
