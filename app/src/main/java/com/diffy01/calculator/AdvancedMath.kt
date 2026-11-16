@@ -1,6 +1,9 @@
 package com.diffy01.calculator
 
 import kotlin.math.*
+import java.text.DecimalFormat
+import java.text.DecimalFormatSymbols
+import java.util.Locale
 
 data class Fraction(val numerator: Long, val denominator: Long) {
     init { require(denominator != 0L) { "A fraction cannot have a zero denominator" } }
@@ -96,5 +99,10 @@ object AdvancedMath {
         require(groups[from] == groups[to]) { "Those units are not compatible" }
         return value * units.getValue(from) / units.getValue(to)
     }
-    fun format(x: Double): String = if (!x.isFinite()) "Undefined" else String.format(java.util.Locale.US, "%.10g", if (abs(x)<1e-12) 0.0 else x)
+    fun format(x: Double): String {
+        if (!x.isFinite()) return "Undefined"
+        val value = if (abs(x) < 1e-12) 0.0 else x
+        val pattern = if (abs(value) >= 1e12 || (value != 0.0 && abs(value) < 1e-8)) "0.##########E0" else "0.##########"
+        return DecimalFormat(pattern, DecimalFormatSymbols(Locale.US)).format(value)
+    }
 }
