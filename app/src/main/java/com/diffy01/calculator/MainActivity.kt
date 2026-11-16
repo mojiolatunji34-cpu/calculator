@@ -28,6 +28,9 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
+import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -373,6 +376,7 @@ private fun GraphScreen(surface:Color,fg:Color,muted:Color,degree:Boolean) {
 @Composable
 private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,initiallyUnlocked:Boolean=false) {
     val context = LocalContext.current
+    val lifecycleOwner = LocalLifecycleOwner.current
     val mediaVault = remember { SecureMediaVault(context) }
     var mediaItems by remember { mutableStateOf(mediaVault.listItems()) }
     var previewItem by remember { mutableStateOf<SecureMediaItem?>(null) }
@@ -416,6 +420,20 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
     var recoveryInput by remember { mutableStateOf("") }; var recoveryNewPin by remember { mutableStateOf("") }
     var recoveryCodeToSave by remember { mutableStateOf("") }
     var entries by remember { mutableStateOf(emptyList<VaultEntry>()) }
+    DisposableEffect(lifecycleOwner, unlocked) {
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP && unlocked) {
+                closePreview()
+                unlocked = false
+                entries = emptyList()
+                mediaItems = emptyList()
+                title = ""; secret = ""; currentPin = ""; newPin = ""; recoveryInput = ""; recoveryNewPin = ""; recoveryCodeToSave = ""
+                message = "Private gallery locked when the app was left."
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose { lifecycleOwner.lifecycle.removeObserver(observer) }
+    }
     LaunchedEffect(unlocked) {
         if (unlocked) {
             delay(5 * 60 * 1000L)
@@ -431,7 +449,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
         Text("PRIVATE GALLERY",color=fg,fontSize=19.sp,fontWeight=FontWeight.Bold)
         Text("Encrypted on this device. Use a PIN you do not use elsewhere. This is a simple private notes vault, not a replacement for a dedicated password manager.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=10.dp))
         if(!unlocked) {
-            PinField(if(configured) "Enter your private access code" else "Create a 6–12 digit PIN",pin){pin=it.filter(Char::isDigit).take(12)}
+            PinField(if(configured) "Enter your private access code" else "Create a 4- or 6-digit code",pin){pin=it.filter(Char::isDigit).take(6)}
             PrimaryAction(if(configured) "UNLOCK PRIVATE GALLERY" else "CREATE PRIVATE GALLERY") {
                 runCatching {
                     if(!configured) { recoveryCodeToSave=vault.setPin(pin.toCharArray()); configured=true; unlocked=true; message="Vault created. Write down the one-time recovery code shown below and keep it somewhere safe." }
@@ -443,7 +461,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
             if(configured) {
                 Text("Forgot your PIN? Use your recovery code to set a new one.",color=muted,fontSize=12.sp,modifier=Modifier.padding(top=12.dp))
                 PinField("12-digit recovery code",recoveryInput){recoveryInput=it.filter(Char::isDigit).take(12)}
-                PinField("New PIN (6-12 digits)",recoveryNewPin){recoveryNewPin=it.filter(Char::isDigit).take(12)}
+                PinField("New PIN (4 or 6 digits)",recoveryNewPin){recoveryNewPin=it.filter(Char::isDigit).take(12)}
                 PrimaryAction("RESET PIN WITH RECOVERY CODE") {
                     runCatching {
                         recoveryCodeToSave=vault.resetPinWithRecoveryCode(recoveryInput.toCharArray(),recoveryNewPin.toCharArray())
@@ -475,8 +493,14 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
                                     previewFile = decrypted
                                     previewItem = item
                                     if (item.mimeType.startsWith("image/")) {
-                                        previewBitmap = BitmapFactory.decodeFile(decrypted.absolutePath)
-                                            ?: error("This image format cannot be previewed.")
+                                        val bounds = BitmapFactory.Options().apply { inJustDecodeBounds = true }
+                                        BitmapFactory.decodeFile(decrypted.absolutePath, bounds)
+                                        var sample = 1
+                                        while (bounds.outWidth / sample > 2048 || bounds.outHeight / sample > 2048) sample *= 2
+                                        previewBitmap = BitmapFactory.decodeFile(
+                                            decrypted.absolutePath,
+                                            BitmapFactory.Options().apply { inSampleSize = sample }
+                                        ) ?: error("This image format cannot be previewed.")
                                     }
                                     message = ""
                                 }.onFailure { closePreview(); message=it.message ?: "Could not preview this file." }
@@ -529,8 +553,8 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color,ini
                 else { entries=entries+VaultEntry(title,secret); vault.writeEntries(entries); title="";secret="";message="Saved securely on this device." }
             }
             Text("PIN SECURITY",color=fg,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=12.dp))
-            PinField("Current PIN",currentPin){currentPin=it.filter(Char::isDigit).take(12)}
-            PinField("New PIN (6-12 digits)",newPin){newPin=it.filter(Char::isDigit).take(12)}
+            PinField("Current PIN",currentPin){currentPin=it.filter(Char::isDigit).take(6)}
+            PinField("New PIN (6-12 digits)",newPin){newPin=it.filter(Char::isDigit).take(6)}
             PrimaryAction("CHANGE VAULT PIN") {
                 runCatching { recoveryCodeToSave=vault.changePin(currentPin.toCharArray(),newPin.toCharArray()); currentPin="";newPin="";message="Vault PIN changed. Save your new recovery code below. Existing notes were preserved." }
                     .onFailure { currentPin="";newPin="";message=it.message ?: "Could not change PIN" }
@@ -566,22 +590,22 @@ private fun SettingsScreen(surface:Color,fg:Color,muted:Color,dark:Boolean,onDar
         PrimaryAction("CLEAR CALCULATION HISTORY",onClear)
         Divider(color=muted.copy(alpha=.2f),modifier=Modifier.padding(vertical=14.dp))
         Text("Private access code",color=fg,fontWeight=FontWeight.Bold)
-        Text("Create your own 6–12 digit code. Enter it on the calculator and press = to open your private gallery. There is no preset code.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=8.dp))
+        Text("Create your own 4- or 6-digit code. Type it into the calculator and press = to open your private gallery. There is no preset code.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=8.dp))
         if (!configured) {
-            PinField("Create your private code",createCode){createCode=it.filter(Char::isDigit).take(12)}
-            PinField("Confirm private code",confirmCode){confirmCode=it.filter(Char::isDigit).take(12)}
+            PinField("Create your private code",createCode){createCode=it.filter(Char::isDigit).take(6)}
+            PinField("Confirm private code",confirmCode){confirmCode=it.filter(Char::isDigit).take(6)}
             PrimaryAction("SAVE PRIVATE CODE") {
-                if (createCode.length !in 6..12) privateMessage="Use 6–12 digits."
+                if (createCode.length != 4 && createCode.length != 6) privateMessage="Use exactly 4 or 6 digits."
                 else if (createCode != confirmCode) privateMessage="The codes do not match."
                 else runCatching { recoveryCode=vault.setPin(createCode.toCharArray()); configured=true; createCode=""; confirmCode=""; privateMessage="Private code saved. Keep the recovery code below somewhere safe." }
                     .onFailure { privateMessage=it.message ?: "Could not save the code." }
             }
         } else {
             PinField("Current private code",currentCode){currentCode=it.filter(Char::isDigit).take(12)}
-            PinField("New private code",newCode){newCode=it.filter(Char::isDigit).take(12)}
-            PinField("Confirm new code",confirmNewCode){confirmNewCode=it.filter(Char::isDigit).take(12)}
+            PinField("New private code",newCode){newCode=it.filter(Char::isDigit).take(6)}
+            PinField("Confirm new code",confirmNewCode){confirmNewCode=it.filter(Char::isDigit).take(6)}
             PrimaryAction("CHANGE PRIVATE CODE") {
-                if (newCode.length !in 6..12) privateMessage="Use 6–12 digits."
+                if (newCode.length != 4 && newCode.length != 6) privateMessage="Use 6–12 digits."
                 else if (newCode != confirmNewCode) privateMessage="The new codes do not match."
                 else runCatching { recoveryCode=vault.changePin(currentCode.toCharArray(),newCode.toCharArray()); currentCode="";newCode="";confirmNewCode="";privateMessage="Private code changed. Save the new recovery code below." }
                     .onFailure { currentCode="";newCode="";confirmNewCode="";privateMessage=it.message ?: "Could not change the code." }
