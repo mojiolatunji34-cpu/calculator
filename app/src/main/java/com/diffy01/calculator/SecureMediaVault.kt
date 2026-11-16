@@ -6,6 +6,8 @@ import android.provider.OpenableColumns
 import android.util.Base64
 import java.io.File
 import java.io.FileOutputStream
+import java.io.FileInputStream
+import javax.crypto.CipherInputStream
 import java.security.KeyStore
 import java.security.SecureRandom
 import java.util.UUID
@@ -89,6 +91,49 @@ class SecureMediaVault(private val context: Context) {
             return item
         } catch (error: Exception) {
             destination.delete()
+            throw error
+        }
+    }
+
+    /** Decrypts one selected item to a short-lived cache file for in-app preview. */
+    @Synchronized
+    fun decryptToCache(id: String): File {
+        require(id.matches(Regex("[a-fA-F0-9-]{36}"))) { "Invalid private file identifier." }
+        val encryptedFile = File(directory, "$id.enc")
+        require(encryptedFile.isFile) { "Private file not found." }
+        val item = listItems().firstOrNull { it.id == id } ?: error("Private file not found.")
+        val extension = when (item.mimeType.lowercase()) {
+            "image/jpeg" -> ".jpg"
+            "image/png" -> ".png"
+            "image/webp" -> ".webp"
+            "image/gif" -> ".gif"
+            "video/mp4" -> ".mp4"
+            "video/webm" -> ".webm"
+            "video/3gpp" -> ".3gp"
+            "video/quicktime" -> ".mov"
+            else -> ".tmp"
+        }
+        val temporary = File.createTempFile("private_preview_", extension, context.cacheDir)
+        try {
+            FileInputStream(encryptedFile).use { raw ->
+                val iv = ByteArray(12)
+                var offset = 0
+                while (offset < iv.size) {
+                    val count = raw.read(iv, offset, iv.size - offset)
+                    if (count < 0) error("Private file is damaged.")
+                    offset += count
+                }
+                val cipher = Cipher.getInstance("AES/GCM/NoPadding")
+                cipher.init(Cipher.DECRYPT_MODE, key(), GCMParameterSpec(128, iv))
+                CipherInputStream(raw, cipher).use { decrypted ->
+                    FileOutputStream(temporary).use { output ->
+                        decrypted.copyTo(output, 64 * 1024)
+                    }
+                }
+            }
+            return temporary
+        } catch (error: Exception) {
+            temporary.delete()
             throw error
         }
     }
