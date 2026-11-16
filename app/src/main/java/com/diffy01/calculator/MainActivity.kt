@@ -276,29 +276,49 @@ private fun ToolsScreen(surface:Color,fg:Color,muted:Color) {
 @Composable
 private fun GraphScreen(surface:Color,fg:Color,muted:Color,degree:Boolean) {
     var function by remember { mutableStateOf("sin(x)") }
+    var secondFunction by remember { mutableStateOf("x^2/10") }
     var range by remember { mutableStateOf("10") }
-    Text("FUNCTION GRAPH",color=fg,fontSize=19.sp,fontWeight=FontWeight.Bold)
-    Text("Enter a function using x, e.g. x^2, sin(x), or x^3-2*x",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=8.dp))
-    Field("f(x)",function){function=it}; Field("X range (+/-)",range){range=it}
-    Surface(color=surface,shape=RoundedCornerShape(18.dp),modifier=Modifier.fillMaxWidth().height(260.dp).padding(vertical=10.dp)) {
-        Canvas(Modifier.fillMaxSize().padding(12.dp)) {
-            val w=size.width; val h=size.height
-            drawLine(muted.copy(alpha=.5f),Offset(0f,h/2),Offset(w,h/2),1.dp.toPx())
-            drawLine(muted.copy(alpha=.5f),Offset(w/2,0f),Offset(w/2,h),1.dp.toPx())
-            val limit=range.toFloatOrNull()?.coerceIn(1f,100f) ?: 10f
-            val path=Path(); var started=false
-            for(i in 0..300) {
-                val x=-limit+2*limit*i/300
-                val y=runCatching { CalculatorEngine.evaluate(function.replace(Regex("\\bx\\b"),"($x)"),degree).toFloat() }.getOrNull()
-                if(y!=null && y.isFinite() && abs(y)<limit*10) {
-                    val px=i/300f*w; val py=h/2-y/(2*limit)*h
-                    if(!started){path.moveTo(px,py);started=true}else path.lineTo(px,py)
-                } else started=false
-            }
-            drawPath(path,Accent,style=androidx.compose.ui.graphics.drawscope.Stroke(width=2.dp.toPx()))
+    var center by remember { mutableStateOf("0") }
+    var showSecond by remember { mutableStateOf(true) }
+    Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
+        Text("FUNCTION GRAPH",color=fg,fontSize=19.sp,fontWeight=FontWeight.Bold)
+        Text("Plot functions of x. Change the center to pan horizontally and the half-range to zoom.",color=muted,fontSize=12.sp,modifier=Modifier.padding(vertical=8.dp))
+        Field("f(x)",function){function=it}
+        Field("g(x)",secondFunction){secondFunction=it}
+        Row(verticalAlignment=Alignment.CenterVertically) {
+            Text("Show second function",color=muted,modifier=Modifier.weight(1f))
+            Switch(checked=showSecond,onCheckedChange={showSecond=it})
         }
+        Row(horizontalArrangement=Arrangement.spacedBy(8.dp)) {
+            Column(Modifier.weight(1f)) { Field("X half-range",range){range=it} }
+            Column(Modifier.weight(1f)) { Field("X center",center){center=it} }
+        }
+        Surface(color=surface,shape=RoundedCornerShape(18.dp),modifier=Modifier.fillMaxWidth().height(280.dp).padding(vertical=10.dp)) {
+            Canvas(Modifier.fillMaxSize().padding(12.dp)) {
+                val w=size.width; val h=size.height
+                val limit=range.toFloatOrNull()?.coerceIn(.1f,1000f) ?: 10f
+                val origin=center.toFloatOrNull() ?: 0f
+                drawLine(muted.copy(alpha=.5f),Offset(0f,h/2),Offset(w,h/2),1.dp.toPx())
+                drawLine(muted.copy(alpha=.5f),Offset(w/2,0f),Offset(w/2,h),1.dp.toPx())
+                fun plot(expression:String, scale:Float) {
+                    val path=Path(); var started=false
+                    for(i in 0..500) {
+                        val x=origin-limit+2*limit*i/500
+                        val y=runCatching { CalculatorEngine.evaluate(expression.replace(Regex("\\\\bx\\\\b"),"($x)"),degree).toFloat() }.getOrNull()
+                        if(y!=null && y.isFinite() && abs(y)<limit*scale) {
+                            val px=i/500f*w; val py=h/2-y/(2*limit)*h
+                            if(!started){path.moveTo(px,py);started=true}else path.lineTo(px,py)
+                        } else started=false
+                    }
+                    drawPath(path,Accent,style=androidx.compose.ui.graphics.drawscope.Stroke(width=2.dp.toPx()))
+                }
+                plot(function,10f)
+                if(showSecond) plot(secondFunction,10f)
+            }
+        }
+        Text("X window: \${(center.toDoubleOrNull() ?: 0.0)-(range.toDoubleOrNull() ?: 10.0)} to \${(center.toDoubleOrNull() ?: 0.0)+(range.toDoubleOrNull() ?: 10.0)}",color=muted,fontSize=11.sp)
+        Text(if(degree) "Trigonometric functions use degrees." else "Trigonometric functions use radians.",color=muted,fontSize=11.sp)
     }
-    Text(if(degree) "Trigonometric functions use degrees in this graph." else "Trigonometric functions use radians in this graph.",color=muted,fontSize=11.sp)
 }
 
 @Composable
