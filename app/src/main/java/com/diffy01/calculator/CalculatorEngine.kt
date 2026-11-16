@@ -130,7 +130,16 @@ object CalculatorEngine {
                 pos++
             }
             require(dots <= 1 && pos > start, "Invalid number")
-            return input.substring(start, pos).toDoubleOrNull() ?: throw IllegalArgumentException("Invalid number")
+            if (pos < input.length && (input[pos] == 'e' || input[pos] == 'E')) {
+                val exponentStart = pos++
+                if (pos < input.length && (input[pos] == '+' || input[pos] == '-')) pos++
+                val digitsStart = pos
+                while (pos < input.length && input[pos].isDigit()) pos++
+                require(pos > digitsStart, "Invalid scientific notation")
+                if (pos == exponentStart + 1) throw IllegalArgumentException("Invalid scientific notation")
+            }
+            return input.substring(start, pos).toDoubleOrNull()?.takeIf { it.isFinite() }
+                ?: throw IllegalArgumentException("Invalid or out-of-range number")
         }
     }
 }
