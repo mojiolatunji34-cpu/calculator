@@ -306,6 +306,7 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
     var pin by remember { mutableStateOf("") }; var unlocked by remember { mutableStateOf(false) }
     var configured by remember { mutableStateOf(vault.isConfigured()) }
     var title by remember { mutableStateOf("") }; var secret by remember { mutableStateOf("") }
+    var currentPin by remember { mutableStateOf("") }; var newPin by remember { mutableStateOf("") }
     var entries by remember { mutableStateOf(emptyList<VaultEntry>()) }; var message by remember { mutableStateOf("") }
     Column(Modifier.fillMaxSize().verticalScroll(rememberScrollState())) {
         Text("PRIVATE VAULT",color=fg,fontSize=19.sp,fontWeight=FontWeight.Bold)
@@ -326,6 +327,13 @@ private fun VaultScreen(vault:SecureVault,surface:Color,fg:Color,muted:Color) {
             PrimaryAction("SAVE ENCRYPTED ITEM") {
                 if(title.isBlank()||secret.isBlank()) message="Enter both a title and content."
                 else { entries=entries+VaultEntry(title,secret); vault.writeEntries(entries); title="";secret="";message="Saved securely on this device." }
+            }
+            Text("PIN SECURITY",color=fg,fontWeight=FontWeight.Bold,modifier=Modifier.padding(top=12.dp))
+            Field("Current PIN",currentPin){currentPin=it.filter(Char::isDigit).take(12)}
+            Field("New PIN (6-12 digits)",newPin){newPin=it.filter(Char::isDigit).take(12)}
+            PrimaryAction("CHANGE VAULT PIN") {
+                runCatching { vault.changePin(currentPin.toCharArray(),newPin.toCharArray()); currentPin="";newPin="";message="Vault PIN changed. Existing notes were preserved." }
+                    .onFailure { currentPin="";newPin="";message=it.message ?: "Could not change PIN" }
             }
             entries.forEachIndexed { index,item ->
                 Column(Modifier.fillMaxWidth().background(surface,RoundedCornerShape(14.dp)).padding(12.dp)) {
