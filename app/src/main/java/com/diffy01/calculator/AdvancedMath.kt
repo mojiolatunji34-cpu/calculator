@@ -133,6 +133,33 @@ object AdvancedMath {
         }
         return List(n) { r -> List(n) { c -> a[r][c + n] } }
     }
+    fun symmetricEigenvalues(matrix: List<List<Double>>): List<Double> {
+        requireSquare(matrix)
+        val n = matrix.size
+        require(matrix.indices.all { r -> (0 until n).all { c -> abs(matrix[r][c] - matrix[c][r]) <= 1e-10 } }) {
+            "Eigenvalue solver currently requires a real symmetric matrix"
+        }
+        val a = Array(n) { r -> matrix[r].toDoubleArray() }
+        repeat(n * n * 50) {
+            var p = 0; var q = 0; var largest = 0.0
+            for (r in 0 until n) for (c in r + 1 until n) {
+                if (abs(a[r][c]) > largest) { largest = abs(a[r][c]); p = r; q = c }
+            }
+            if (largest < 1e-12) return@repeat
+            val angle = 0.5 * atan2(2.0 * a[p][q], a[q][q] - a[p][p])
+            val cosine = cos(angle); val sine = sin(angle)
+            val app = a[p][p]; val aqq = a[q][q]; val apq = a[p][q]
+            a[p][p] = cosine*cosine*app - 2*sine*cosine*apq + sine*sine*aqq
+            a[q][q] = sine*sine*app + 2*sine*cosine*apq + cosine*cosine*aqq
+            a[p][q] = 0.0; a[q][p] = 0.0
+            for (k in 0 until n) if (k != p && k != q) {
+                val akp = a[k][p]; val akq = a[k][q]
+                a[k][p] = cosine*akp - sine*akq; a[p][k] = a[k][p]
+                a[k][q] = sine*akp + cosine*akq; a[q][k] = a[k][q]
+            }
+        }
+        return (0 until n).map { a[it][it] }.sortedDescending()
+    }
     fun rank(matrix: List<List<Double>>): Int {
         requireRectangular(matrix)
         val a = matrix.map { it.toMutableList() }.toMutableList()
