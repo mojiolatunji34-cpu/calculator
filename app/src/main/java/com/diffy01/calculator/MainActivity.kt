@@ -133,8 +133,8 @@ private fun CalculatorScreen(
     history:List<HistoryItem>, setHistory:(List<HistoryItem>)->Unit, memory:Double, setMemory:(Double)->Unit,
     clipboard:androidx.compose.ui.platform.ClipboardManager, context:Context, surface:Color, fg:Color, muted:Color, onOpenTools:()->Unit
 ) {
-    Column(Modifier.fillMaxSize().padding(horizontal=2.dp), verticalArrangement=Arrangement.spacedBy(5.dp)) {
-        Column(Modifier.fillMaxWidth().weight(1f).padding(horizontal=8.dp),verticalArrangement=Arrangement.Bottom,horizontalAlignment=Alignment.End) {
+    Column(Modifier.fillMaxSize().navigationBarsPadding().padding(horizontal=18.dp), verticalArrangement=Arrangement.spacedBy(5.dp)) {
+        Column(Modifier.fillMaxWidth().weight(1f).padding(horizontal=8.dp).padding(top=82.dp),verticalArrangement=Arrangement.Top,horizontalAlignment=Alignment.End) {
             if(expression.isNotEmpty()) Text(expression,color=muted,fontSize=25.sp,textAlign=TextAlign.End,maxLines=2,modifier=Modifier.fillMaxWidth())
             Text(if(error.isNotEmpty()) error else if(expression.isEmpty()) "0" else answer,color=if(error.isNotEmpty()) Color(0xFFFF737D) else Color(0xFFAFCBF4),fontSize=if(answer.length>12) 34.sp else 48.sp,textAlign=TextAlign.End,maxLines=2,modifier=Modifier.fillMaxWidth().padding(top=8.dp))
         }
@@ -189,11 +189,7 @@ private fun CalculatorScreen(
                 if(key!="=" && key!="C") setError("")
             } }
         } }
-        Row(Modifier.fillMaxWidth(),horizontalArrangement=Arrangement.SpaceBetween) {
-            SmallAction("COPY") { clipboard.setText(AnnotatedString(answer)) }
-            SmallAction("SHARE") { context.startActivity(Intent.createChooser(Intent(Intent.ACTION_SEND).setType("text/plain").putExtra(Intent.EXTRA_TEXT,"$expression = $answer"),"Share result")) }
-            SmallAction("a/b") { runCatching { setAnswer(Fraction.fromDecimal(answer.toDouble()).toString()) }.onFailure { setError("Cannot convert result to fraction") } }
-        }
+
     }
 }
 
